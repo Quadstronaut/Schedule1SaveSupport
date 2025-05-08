@@ -46,25 +46,53 @@ try {
 
     if (-not($directoryEnsured)) {
         New-Item -Path $s1ssPath -ItemType Directory -ErrorAction Stop
-        #TODO: download scripts and unpack to $s1ssPath
+        try {
+            # Make a temp
+            $tempDirName = New-Guid
+            $tempDirPath = Join-Path -Path $env:TEMP -ChildPath $tempDirName
+            New-Item -Path $tempDirPath -ItemType Directory
+
+            # Download master.zip to temp
+            $zipEncode = 'aHR0cHM6Ly9naXRodWIuY29tL0dpdEtBZ2VIdWIvU2NoZWR1bGUxU2F2ZVN1cHBvcnQvYXJjaGl2ZS9yZWZzL2hlYWRzL21hc3Rlci56aXA='
+            $zipBytes = [System.Convert]::FromBase64String($zipEncode)
+            $zipUrl = [System.Text.Encoding]::UTF8.GetString($zipBytes)
+            Write-Host "Downloading scripts from GitHub to $tempDirPath" -ForegroundColor Cyan
+            $zipFile = Join-Path -Path $tempDirPath -ChildPath 's1ss_temp.zip'
+            Invoke-WebRequest -Uri $ZipUrl -OutFile $zipFile -ErrorAction Stop
+
+            # Extract the contents
+            Write-Host "Extracting scripts to $s1ssPath" -ForegroundColor Cyan
+            Expand-Archive -Path $zipFile -DestinationPath $s1ssPath -Force -ErrorAction Stop
+        }
+        catch {
+            Write-Error "Error downloading or extracting scripts: $($_.Exception.Message)"
+            throw  # Re-throw the error to be caught by calling script
+        }
+        finally {
+            # Clean up
+            Write-Host "Extraction complete, cleaning up temporary files." -ForegroundColor Green
+            Remove-Item -Path $tempDirPath -Force -ErrorAction SilentlyContinue
+        }
     }
     else {
         # Look for existing vault
         $vaultPath = Join-Path -Path $s1ssPath -ChildPath 'Vault'
         $localVaultFound = Test-Path $vaultPath -PathType Container
-        if (-not($localVaultFound)) {
-            ## New Vault
-            #TODO: Create new vault at $vaultPath
+        try {
+            if (-not($localVaultFound)) {
+                ## New Vault
+            }
+            else {
+                ## Load Vault
+                #TODO: Load vault from $vaultPath
+            }
         }
-        else {
-            ## Load Vault
-            #TODO: Load vault from $vaultPath
+        catch {
         }
-        ## Save Support Super System
+        finally {
+        }
 
-        # Set working location
-        Get-Function -Name Set-LocationSchedule1Saves
-        Set-LocationSchedule1Saves
+        ## Save Support Super System
 
         $mnemonicLoop = $true
         while ($true -eq $mnemonicLoop) {
@@ -78,21 +106,22 @@ try {
             Write-Host "R) Restore a save"
             Write-Host "Q) Quit"
             $userInput = Read-Host "Select a number, Q or 'empty' to exit"
+            Clear-Host
             switch ($userInput) {
                 'B' {
-                    #TODO: BACKUP a save                   
+                    #TODO: BACKUP a save
                 }
                 'I' {
-                    #TODO: INSPECT a save               
+                    #TODO: INSPECT a save
                 }
                 'L' {
-                    #TODO: LIST saves                  
+                    #TODO: LIST saves
                 }
                 'M' {
-                    #TODO: MODIFY a save            
+                    #TODO: MODIFY a save
                 }
                 'R' {
-                    #TODO: RESTORE a save                   
+                    #TODO: RESTORE a save
                 }
                 'Q' { $mnemonicLoop = $false }
                 Default { $mnemonicLoop = $false }
@@ -103,6 +132,5 @@ try {
 catch {
     Write-Error "An error occurred: $($_.Exception.Message)"
     Write-Host "Script execution halted." -ForegroundColor Red
-    # Fry, there's no such thing as 2!!
-    exit 2
+    exit 2 # "But Fry, there's no such thing as 2!" -Bender
 }
