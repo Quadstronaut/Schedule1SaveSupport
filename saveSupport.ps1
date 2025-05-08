@@ -4,88 +4,93 @@
 .DESCRIPTION
     This script downloads and executes PowerShell scripts from a GitHub repository.
     It manages a local directory in AppData\LocalLow to store the downloaded scripts,
-    placing them next to the game's TVGS folder. This allows for easy updating of scripts
-    by modifying the GitHub repository. This is configurable to different repos for the
-    as a convenience to anyone who forks the project and wants to test or operate out of
-    their own repository.
+    placing them next to the game's TVGS folder.
 .NOTES
     Author: Kage@GitHub Quadstronaut@Schedule1
     Version: 1.0
     GitHub Repository: https://github.com/GitKageHub/Schedule1SaveSupport
 #>
 
-## User Configurable Variables - see .DESCRIPTION
-
-# GitHub repository
-$repoUrl = "GitKageHub/Schedule1SaveSupport"
-$remoteDirName = "Functions"
-$rawContentUrl = "https://raw.githubusercontent.com/$repoUrl/$remoteDirName"
-
 ## Functions
 
 # Telemetry
 $timeStart = Get-Date
 
-function Invoke-ScriptFunction {
+function Get-Function {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Name
     )
     if (Test-Path -Path $Name -PathType Leaf) {
-        try {
-            . $Name
-            if (Get-Command -Name $Name -Function) {
-                & $Name
-            }
-            else {
-                Write-Warning "No function with the name '$Name' found in script '$Name'."
-            }
-        }
+        try { . $Name }
         catch {
-            Write-Error "Failed to execute script or function: $Name. Error: $($_.Exception.Message)"
+            Write-Error "Failed to execute script: $Name. Error: $($_.Exception.Message)"
             throw
         }
     }
     else {
-        Write-Warning "Script does not exist: $Name"
+        Write-Warning "Script does not exist: $Path"
     }
 }
 
 ## Sanity Logic
 
 try {
-    # %APPDATA%/LocalLow target
-    $localDirName = "S1SS" # S1SS is the official target
+    $localDirName = 'S1SS' # goes the snake
     $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
-    $localDir = Join-Path -Path $localLowPath -ChildPath $localDirName
+    $s1ssPath = Join-Path -Path $localLowPath -ChildPath $localDirName
 
     # Ensure the local directory exists
-    $directoryEnsured = Test-Path -Path $localDir
+    $directoryEnsured = Test-Path -Path $s1ssPath
+
     if (-not($directoryEnsured)) {
-        New-Item -Path $localDir -ItemType Directory -ErrorAction Stop
+        New-Item -Path $s1ssPath -ItemType Directory -ErrorAction Stop
+        #TODO: download scripts and unpack to $s1ssPath
     }
     else {
         # Look for existing vault
-        $localVault = Join-Path -Path $localDir -ChildPath 'S1SS_Vault'
-        $localVaultFound = Test-Path $localVault -PathType Container
+        $vaultPath = Join-Path -Path $s1ssPath -ChildPath 'Vault'
+        $localVaultFound = Test-Path $vaultPath -PathType Container
         if (-not($localVaultFound)) {
             ## New Vault
-            #TODO: Create new vault at $localVault
+            #TODO: Create new vault at $vaultPath
         }
         else {
             ## Load Vault
-            #TODO: Load vault from $localVault
+            #TODO: Load vault from $vaultPath
         }
         ## Save Support Super System
 
         # Set working location
-        Invoke-ScriptFunction -Name Set-LocationSchedule1Saves
+        Get-Function -Name Set-LocationSchedule1Saves
+        Set-LocationSchedule1Saves
 
-        #while ($true) {
-        #TODO: Menu for user input
-        Get-Location
-        # }
+        $mnemonicLoop = $true
+        while ($mnemonicLoop) {
+            # TODO: Menu for user input
+            Write-Host "Schedule 1 Save Support`n"
+            Write-Host "Make a selection:"
+            Write-Host "1. List saves"
+            Write-Host ""
+            Write-Host ""
+            Write-Host ""
+            Write-Host ""
+            Write-Host ""
+            Write-Host ""
+            Write-Host ""
+            Write-Host ""
+            Write-Host ""
+            $userInput = Read-Host "Enter 'q' or 'exit/quit/stop' to do just that."
+        
+            if ($userInput -eq 'exit') {
+                $mnemonicLoop = $false # Set the condition to false to exit.
+                Write-Host "Exiting the loop."
+            }
+            else {
+                Write-Host "Continuing the loop..."
+            }
+        }
     }
 }
 catch {
