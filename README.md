@@ -26,7 +26,7 @@ The launcher downloads and executes scripts.  Features are accessed through thes
 ### ⚙️ Configuration
 
 * Scripts are stored in `AppData\LocalLow\S1SS`.
-* Edit scripts for custom functionality.
+* Edit script variables for custom functionality.
 
 ### ➕ Contributing
 
@@ -45,5 +45,4 @@ This will be up on GitHub following the initial release.
 
 ### ❓ Questions
 
-[@Quadstronaut on TVGS Shedule 1 Official Server](LINK_TO_TYLER'S_SERVER_GOES_HERE)
-Project Discord coming soon, maybe.
+[@Quadstronaut (iamnotkage) on TVGS Shedule 1 Official Server](https://discord.gg/PGe2nnaCn5)
