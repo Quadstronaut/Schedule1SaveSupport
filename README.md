@@ -7,8 +7,7 @@
 * **Save Vault:** Backup and restore your game saves. 🛡️
 * **Save Editing:** Modify JSON values within save files. 🔧
 * **Save Exploration:** Explore save file data. 🔍
-* **Cross-Platform:** PowerShell-based, works on Windows 10+.\* 💻
-* **Auto-Updating:** Downloads latest scripts from GitHub. 🌐
+* **Tested:** PowerShell-based, works on Windows 10+.\* 💻
 
 \* Tested on Windows 10 OS Build 19045.5796 with PowerShell 5.1.19041.5794 BuildVersion 10.0.19041.5794
 
@@ -18,15 +17,15 @@
 1.  Download the launcher script.
 2.  Run it.
 3.  Scripts and saves are saved to `AppData\LocalLow\S1SS`.
+4.  A shortcut can optionally be placed on Desktop or Documents
 
 ### ⚡ Usage
 
-The launcher downloads and executes scripts.  Features are accessed through these scripts.
+Run saveSupport.ps1 - the script will ask you what actions to take and automation will handle the rest.
 
 ### ⚙️ Configuration
 
 * Scripts are stored in `AppData\LocalLow\S1SS`.
-* Edit script variables for custom functionality.
 
 ### ➕ Contributing
 
