@@ -1,7 +1,4 @@
-function Set-Schedule1SaveLocation {
-    # Get the current user's AppData\LocalLow path.
-    $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
-
+function Set-LocationSchedule1Saves {
     # Construct the base path to the Schedule 1 saves.
     $schedule1SavesPath = Join-Path -Path $localLowPath -ChildPath "TVGS\Schedule I\Saves"
 
