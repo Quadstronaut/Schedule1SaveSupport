@@ -31,5 +31,3 @@ $saveData.GenericSaveables.Saveables[0]
 
 # To access the GUID of the first GenericSaveable object
 $saveData.GenericSaveables.Saveables[0].GUID
-
-# And so on...
