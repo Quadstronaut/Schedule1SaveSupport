@@ -26,7 +26,7 @@ $rawContentUrl = "https://raw.githubusercontent.com/$repoUrl/$remoteDirName"
 # Telemetry
 $timeStart = Get-Date
 
-function Get-Remote {
+function Verify-Remote {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
@@ -101,7 +101,7 @@ function Get-Function {
 ## Sanity Logic
 
 try {
-    $sanityCheck = Get-Remote -rawContentUrl $rawContentUrl
+    $sanityCheck = Verify-Remote -rawContentUrl $rawContentUrl
 
     if ($sanityCheck) {
         # %APPDATA%/LocalLow target
@@ -129,8 +129,10 @@ try {
             ## Save Support Super System
 
             # Find the SaveGame_x folders
-            Get-Function -Name Set-Schedule1SaveLocation
-            $saveLocation = Set-Schedule1SaveLocation
+            Get-Function -Name Set-LocationSchedule1Saves
+
+            # Set working location
+            Set-LocationSchedule1Saves
 
             #TODO: Prompt user for decision
 
