@@ -26,118 +26,66 @@ $rawContentUrl = "https://raw.githubusercontent.com/$repoUrl/$remoteDirName"
 # Telemetry
 $timeStart = Get-Date
 
-function Verify-Remote {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$rawContentUrl
-    )
-    begin {
-        # No Begin block needed for this function
-    }
-    process {
-        try {
-            # Request a json response from GitHub
-            $response = Invoke-WebRequest -Uri "$rawContentUrl/?format=json" -Method Get -UseBasicParsing -ErrorAction Stop
-            if ($response.StatusCode -eq 200) {
-                # Attempt to parse
-                try {
-                    $jsonResponse = ConvertFrom-Json -InputObject $response.Content
-                    # Check if the response is an array and contains at least one .ps1 file.
-                    if ($jsonResponse -is [array]) {
-                        foreach ($item in $jsonResponse) {
-                            if ($item.type -eq "file" -and $item.name -like "*.ps1") {
-                                return $true
-                            }
-                        }
-                        # No .ps1 files were found in the listing.
-                        return $false
-                    }
-                    else {
-                        Write-Warning "Unexpected response from GitHub API: $($response.Content)"
-                        return $false
-                    }
-                }
-                catch {
-                    # Malformed json
-                    Write-Warning "Error parsing JSON response: $($_.Exception.Message)"
-                    return $false
-                }
-            }
-            else {
-                Write-Warning 'Response not 200, GitHub unreachabale?'
-                return $false
-            }
-        }
-        catch {
-            # Web errors
-            Write-Warning "Error checking URL '$rawContentUrl': $($_.Exception.Message)"
-            return $false # Return false on error
-        }
-    }
-    end {
-        # No End block needed for this function.
-    }
-} 
-
-function Get-Function {
+function Invoke-ScriptFunction {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Name
     )
     if (Test-Path -Path $Name -PathType Leaf) {
-        try { . $Name }
+        try {
+            . $Name
+            if (Get-Command -Name $Name -Function) {
+                & $Name
+            }
+            else {
+                Write-Warning "No function with the name '$Name' found in script '$Name'."
+            }
+        }
         catch {
-            Write-Error "Failed to execute script: $Name. Error: $($_.Exception.Message)"
+            Write-Error "Failed to execute script or function: $Name. Error: $($_.Exception.Message)"
             throw
         }
     }
     else {
-        Write-Warning "Script does not exist: $Path"
+        Write-Warning "Script does not exist: $Name"
     }
 }
 
 ## Sanity Logic
 
 try {
-    $sanityCheck = Verify-Remote -rawContentUrl $rawContentUrl
+    # %APPDATA%/LocalLow target
+    $localDirName = "S1SS" # S1SS is the official target
+    $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
+    $localDir = Join-Path -Path $localLowPath -ChildPath $localDirName
 
-    if ($sanityCheck) {
-        # %APPDATA%/LocalLow target
-        $localDirName = "S1SS" # S1SS is the official target
-        $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
-        $localDir = Join-Path -Path $localLowPath -ChildPath $localDirName
-
-        # Ensure the local directory exists
-        $directoryEnsured = Test-Path -Path $localDir
-        if (-not($directoryEnsured)) {
-            New-Item -Path $localDir -ItemType Directory -ErrorAction Stop
+    # Ensure the local directory exists
+    $directoryEnsured = Test-Path -Path $localDir
+    if (-not($directoryEnsured)) {
+        New-Item -Path $localDir -ItemType Directory -ErrorAction Stop
+    }
+    else {
+        # Look for existing vault
+        $localVault = Join-Path -Path $localDir -ChildPath 'S1SS_Vault'
+        $localVaultFound = Test-Path $localVault -PathType Container
+        if (-not($localVaultFound)) {
+            ## New Vault
+            #TODO: Create new vault at $localVault
         }
         else {
-            # Look for existing vault
-            $localVault = Join-Path -Path $localDir -ChildPath 'S1SS_Vault'
-            $localVaultFound = Test-Path $localVault -PathType Container
-            if (-not($localVaultFound)) {
-                ## New Vault
-                #TODO: Create new vault at $localVault
-            }
-            else {
-                ## Load Vault
-                #TODO: Load vault from $localVault
-            }
-            ## Save Support Super System
-
-            # Find the SaveGame_x folders
-            Get-Function -Name Set-LocationSchedule1Saves
-
-            # Set working location
-            Set-LocationSchedule1Saves
-
-            #TODO: Prompt user for decision
-
-
+            ## Load Vault
+            #TODO: Load vault from $localVault
         }
+        ## Save Support Super System
+
+        # Set working location
+        Invoke-ScriptFunction -Name Set-LocationSchedule1Saves
+
+        #while ($true) {
+        #TODO: Menu for user input
+        Get-Location
+        # }
     }
 }
 catch {
