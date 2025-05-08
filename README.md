@@ -46,4 +46,4 @@ This will be up on GitHub following the initial release.
 ### ❓ Questions
 
 [@Quadstronaut on TVGS Shedule 1 Official Server](LINK_TO_TYLER'S_SERVER_GOES_HERE)
-[Project Discord coming soon](#-schedule-1-save-support-s1ss)
+Project Discord coming soon, maybe.
