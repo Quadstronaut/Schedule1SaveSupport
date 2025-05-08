@@ -67,28 +67,35 @@ try {
         Set-LocationSchedule1Saves
 
         $mnemonicLoop = $true
-        while ($mnemonicLoop) {
+        while ($true -eq $mnemonicLoop) {
             # TODO: Menu for user input
             Write-Host "Schedule 1 Save Support`n"
             Write-Host "Make a selection:"
-            Write-Host "1. List saves"
-            Write-Host ""
-            Write-Host ""
-            Write-Host ""
-            Write-Host ""
-            Write-Host ""
-            Write-Host ""
-            Write-Host ""
-            Write-Host ""
-            Write-Host ""
-            $userInput = Read-Host "Enter 'q' or 'exit/quit/stop' to do just that."
-        
-            if ($userInput -eq 'exit') {
-                $mnemonicLoop = $false # Set the condition to false to exit.
-                Write-Host "Exiting the loop."
-            }
-            else {
-                Write-Host "Continuing the loop..."
+            Write-Host "B) Backup a save"
+            Write-Host "I) Inspect a save"
+            Write-Host "L) List saves"
+            Write-Host "M) Modify a save"
+            Write-Host "R) Restore a save"
+            Write-Host "Q) Quit"
+            $userInput = Read-Host "Select a number, Q or 'empty' to exit"
+            switch ($userInput) {
+                'B' {
+                    #TODO: BACKUP a save                   
+                }
+                'I' {
+                    #TODO: INSPECT a save               
+                }
+                'L' {
+                    #TODO: LIST saves                  
+                }
+                'M' {
+                    #TODO: MODIFY a save            
+                }
+                'R' {
+                    #TODO: RESTORE a save                   
+                }
+                'Q' { $mnemonicLoop = $false }
+                Default { $mnemonicLoop = $false }
             }
         }
     }
