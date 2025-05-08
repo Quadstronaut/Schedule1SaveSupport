@@ -1,4 +1,9 @@
 function Set-LocationSchedule1Saves {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [boolean]$Return = $false
+    )
     # Construct the base path to the Schedule 1 saves.
     $schedule1SavesPath = Join-Path -Path $localLowPath -ChildPath "TVGS\Schedule I\Saves"
 
@@ -21,11 +26,17 @@ function Set-LocationSchedule1Saves {
     $steamIdDirectory = $steamIdDirectories[0]
     $saveLocation = Join-Path -Path $schedule1SavesPath -ChildPath $steamIdDirectory.Name
 
-     # Check if the final save location exists.
+    # Check if the final save location exists.
     if (-not (Test-Path -Path $saveLocation -PathType 'Container')) {
         Write-Warning "The Schedule 1 save directory does not exist at '$saveLocation'."
         return  # Exit the function if the save directory doesn't exist.
     }
-    # Set the current location to the save directory.
-    Set-Location -Path $saveLocation
+
+    # Handle location based on return flag.
+    if ($Return) {
+        return $saveLocation
+    }
+    else {
+        Set-Location -Path $saveLocation
+    }
 }
