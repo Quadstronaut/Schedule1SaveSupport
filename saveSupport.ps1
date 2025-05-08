@@ -40,6 +40,7 @@ try {
     $localDirName = 'S1SS' # goes the snake
     $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
     $s1ssPath = Join-Path -Path $localLowPath -ChildPath $localDirName
+    $zipEncode = 'aHR0cHM6Ly9naXRodWIuY29tL0dpdEtBZ2VIdWIvU2NoZWR1bGUxU2F2ZVN1cHBvcnQvYXJjaGl2ZS9yZWZzL2hlYWRzL21hc3Rlci56aXA='
 
     # Ensure the local directory exists
     $directoryEnsured = Test-Path -Path $s1ssPath
@@ -53,7 +54,6 @@ try {
             New-Item -Path $tempDirPath -ItemType Directory
 
             # Download master.zip to temp
-            $zipEncode = 'aHR0cHM6Ly9naXRodWIuY29tL0dpdEtBZ2VIdWIvU2NoZWR1bGUxU2F2ZVN1cHBvcnQvYXJjaGl2ZS9yZWZzL2hlYWRzL21hc3Rlci56aXA='
             $zipBytes = [System.Convert]::FromBase64String($zipEncode)
             $zipUrl = [System.Text.Encoding]::UTF8.GetString($zipBytes)
             Write-Host "Downloading scripts from GitHub to $tempDirPath" -ForegroundColor Cyan
@@ -98,16 +98,16 @@ try {
         while ($true -eq $mnemonicLoop) {
             # TODO: Menu for user input
             Write-Host "Schedule 1 Save Support`n"
-            Write-Host "Make a selection:"
-            Write-Host "B) Backup a save"
-            Write-Host "I) Inspect a save"
-            Write-Host "L) List saves"
-            Write-Host "M) Modify a save"
-            Write-Host "R) Restore a save"
-            Write-Host "Q) Quit"
-            $userInput = Read-Host "Select a number, Q or 'empty' to exit"
+            Write-Host 'Make a selection:'
+            Write-Host 'B) Backup a save'
+            Write-Host 'I) Inspect a save'
+            Write-Host 'L) List saves'
+            Write-Host 'M) Modify a save'
+            Write-Host 'R) Restore a save'
+            Write-Host 'Q) Quit'
+            $userInput = Read-Host "Select a number or Q to exit"
             Clear-Host
-            switch ($userInput) {
+            switch ($userInput.ToUpper()) {
                 'B' {
                     #TODO: BACKUP a save
                 }
