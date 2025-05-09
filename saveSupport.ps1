@@ -145,9 +145,8 @@ function Show-SaveGames {
         [Parameter(Mandatory = $true)]
         [string]$TitlePlural,
         [Parameter(Mandatory = $false)]
-        [array]$SaveData = 0 # Default to 0 so as not to crash on a lack of vaulted or unexpected saves
+        [array]$SaveData = 0 # A default is required because this could be a null value
     )
-
     if ($SaveData.Count -gt 0) {
         if ($SaveData.Count -eq 1) {
             Write-Host "--- $TitleSingular ---"
