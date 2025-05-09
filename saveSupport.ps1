@@ -44,7 +44,6 @@ function Get-SaveGame {
     )
     $save = [SaveGame]::new()
     $save.pathSaveGame = $SaveFolder
-
     try {
         # Load Game.json
         $gameFile = Join-Path $SaveFolder "Game.json"
@@ -158,8 +157,6 @@ function Show-SaveGames {
     }
 }
 
-## Sanity Logic
-
 $localDirName = 'S1SS' # goes the snake
 $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
 $s1ssPath = Join-Path -Path $localLowPath -ChildPath $localDirName
@@ -235,7 +232,7 @@ else {
     }
     $totalSaves = $activeSaves.Count + $unexpectedSaves.Count + $vaultedSaves.Count
 
-    ## Save Support
+    ## Save Support : Main
 
     $mnemonicLoop = $true
     while ($true -eq $mnemonicLoop) {
