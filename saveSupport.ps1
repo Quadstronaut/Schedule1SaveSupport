@@ -42,7 +42,6 @@ function Get-SaveGame {
         [Parameter(Mandatory = $true)]
         [string]$SaveFolder
     )
-
     $save = [SaveGame]::new()
     $save.pathSaveGame = $SaveFolder
 
@@ -77,7 +76,7 @@ function Get-SaveGame {
             foreach ($item in $inventoryData.Items) {
                 $itemObject = $item | ConvertFrom-Json
                 if ($itemObject.DataType -eq "CashData") {
-                    $save.CashBalance = $itemObject.CashBalance
+                    $save.CashBalance = "{0:N0}" -f ([int]$itemObject.CashBalance)
                     break # Assuming only one CashData entry
                 }
             }
@@ -87,14 +86,13 @@ function Get-SaveGame {
         $moneyFile = Join-Path $SaveFolder "Money.json"
         if (Test-Path $moneyFile) {
             $moneyData = Get-Content -Path $moneyFile -Raw | ConvertFrom-Json
-            $save.OnlineBalance = $moneyData.OnlineBalance
+            $save.OnlineBalance = "{0:N0}" -f ([int]$moneyData.OnlineBalance)
         }
     }
     catch {
         Write-Warning "Error loading data for save in '$SaveFolder': $($_.Exception.Message)"
         return $null
     }
-
     return $save
 }
 
@@ -155,80 +153,90 @@ else {
     # Look for existing vault
     $vaultPath = Join-Path -Path $s1ssPath -ChildPath 'Vault'
     $localVaultFound = Test-Path $vaultPath -PathType Container
-    $ReadyToSupport = $false
-    while (-not($ReadyToSupport)) {
-        if (-not($localVaultFound)) {
-            ## New Vault
-            New-Item -path $vaultPath -ItemType Directory -Force -ErrorAction Stop -Verbose
-            $ReadyToSupport = $true
-        }
-        else {
-            ## Load Vault
-            class SaveGame {
-                #Game.json
-                $GameVersion
-                $OrganisationName
-                #Metadata.json
-                $LastPlayedDate
-                #Time.json
-                $ElapsedDays
-                #Player_0/Inventory.json
-                $CashBalance
-                #Money.json
-                $OnlineBalance
-                # Path to SaveGame
-                $pathSaveGame
-            }
+    if (-not($localVaultFound)) {
+        New-Item -path $vaultPath -ItemType Directory -Force -ErrorAction Stop -Verbose
+    }
+    class SaveGame {
+        #Game.json
+        $GameVersion
+        $OrganisationName
+        #Metadata.json
+        $LastPlayedDate
+        #Time.json
+        $ElapsedDays
+        #Player_0/Inventory.json
+        $CashBalance
+        #Money.json
+        $OnlineBalance
+        # Path to SaveGame
+        $pathSaveGame
+    }
 
-            # Eat moar RAM
-            $savepathSchedule1 = Set-LocationSchedule1Saves -Return $true
-            $activeSaves = @()
-            $vaultedSaves = @()
-            $unexpectedSaves = @()
+    # Eat moar RAM
+    $savepathSchedule1 = Set-LocationSchedule1Saves -Return $true
+    $activeSaves = @()
+    $vaultedSaves = @()
+    $unexpectedSaves = @()
 
-            # Active Saves
-            for ($i = 1; $i -le 5; $i++) {
-                $saveFolderName = "SaveGame_$i"
-                $saveGamePath = Join-Path $savepathSchedule1 $saveFolderName
-                if (Test-Path $saveGamePath -PathType Container) {
-                    $loadedSave = Get-SaveGame -SaveFolder $saveGamePath
-                    if ($loadedSave) {
-                        $activeSaves += $loadedSave
-                    }
-                }
-            }
-
-            # Unexpected Saves
-            $expectedSaveFolders = 1..5 | ForEach-Object { "SaveGame_$_" }
-            Get-ChildItem -Path $savepathSchedule1 -Directory | Where-Object { $_.Name -notin $expectedSaveFolders } | ForEach-Object {
-                $unexpectedSavePath = $_.FullName
-                $loadedSave = Get-SaveGame -SaveFolder $unexpectedSavePath
-                if ($loadedSave) {
-                    $unexpectedSaves += $loadedSave
-                }
-            }
-
-            # Vaulted Saves
-            if (Test-Path $vaultPath -PathType Container) {
-                Get-ChildItem -Path $vaultPath -Directory | ForEach-Object {
-                    $vaultedSavePath = $_.FullName
-                    $loadedSave = Get-SaveGame -SaveFolder $vaultedSavePath
-                    if ($loadedSave) {
-                        $vaultedSaves += $loadedSave
-                    }
-                }
+    # Active Saves
+    Write-Host "DEBUG: Active Saves"
+    for ($i = 1; $i -le 5; $i++) {
+        $saveFolderName = "SaveGame_$i"
+        $saveGamePath = Join-Path $savepathSchedule1 $saveFolderName
+        if (Test-Path $saveGamePath -PathType Container) {
+            $loadedSave = Get-SaveGame -SaveFolder $saveGamePath
+            if ($loadedSave) {
+                $activeSaves += $loadedSave
             }
         }
     }
+
+    # Unexpected Saves
+    Write-Host "DEBUG: Unexpected Saves"
+    $expectedSaveFolders = 1..5 | ForEach-Object { "SaveGame_$_" }
+    Get-ChildItem -Path $savepathSchedule1 -Directory | Where-Object { $_.Name -notin $expectedSaveFolders } | ForEach-Object {
+        $unexpectedSavePath = $_.FullName
+        $loadedSave = Get-SaveGame -SaveFolder $unexpectedSavePath
+        if ($loadedSave) {
+            $unexpectedSaves += $loadedSave
+        }
+    }
+
+    # Vaulted Saves
+    Write-Host "DEBUG: Vaulted Saves"
+    if (Test-Path $vaultPath -PathType Container) {
+        Get-ChildItem -Path $vaultPath -Directory | ForEach-Object {
+            $vaultedSavePath = $_.FullName
+            $loadedSave = Get-SaveGame -SaveFolder $vaultedSavePath
+            if ($loadedSave) {
+                $vaultedSaves += $loadedSave
+            }
+        }
+    }
+    $totalSaves = $activeSaves.Count + $unexpectedSaves.Count + $vaultedSaves.Count
 
     ## Save Support
 
     $mnemonicLoop = $true
     while ($true -eq $mnemonicLoop) {
         Clear-Host
-        Write-Host "Schedule 1 Save Support`n"
+        Write-Host ' ____  _ ____ ____'
+        Write-Host '/ ___|/ / ___/ ___|'
+        Write-Host '\___ \| \___ \___ \'
+        Write-Host ' ___) | |___) |__) |'
+        Write-Host '|____/|_|____/____/'
+        Write-Host "Active saves in GameSave folder: $($activeSaves.Count)`n"
+        if ($activeSaves.Count -ne $totalSaves) {
+            if ($unexpectedSaves.Count -gt 0) {
+                Write-Host "Unexpected saves in GameSave folder: $($unexpectedSaves.Count)"
+            }
+            if ($vaultedSaves.Count -gt 0) {
+                Write-Host "Vaulted saves in S1SS folder: $($vaultedSaves.Count)"
+            }
+        }
         Write-Host 'Make a selection:'
         Write-Host 'B) Backup a save'
+        Write-Host 'D) Delete a save'
         Write-Host 'I) Inspect a save'
         Write-Host 'L) List saves'
         Write-Host 'M) Modify a save'
@@ -240,19 +248,25 @@ else {
             'B' {
                 #TODO: BACKUP a save
             }
+            'D' {
+                #TODO: BACKUP a save
+            }
             'I' {
                 #TODO: INSPECT a save
             }
             'L' {
                 # List Saves
                 Write-Host "--- Active Saves ---"
-                $activeSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance, pathSaveGame -AutoSize
-
-                Write-Host "--- Unexpected Saves ---"
-                $unexpectedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance, pathSaveGame -AutoSize
-
-                Write-Host "--- Vaulted Saves ---"
-                $vaultedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance, pathSaveGame -AutoSize
+                $activeSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
+                if ($unexpectedSaves.Count -ne 0) {
+                    Write-Host "--- Unexpected Saves ---"
+                    $unexpectedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
+                }
+                if ($vaultedSaves.Count -ne 0) {
+                    Write-Host "--- Vaulted Saves ---"
+                    $vaultedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
+                }
+                Pause
             }
             'M' {
                 #TODO: MODIFY a save
