@@ -1,10 +1,8 @@
 <#
 .SYNOPSIS
-    Launcher for Schedule 1 Save Support scripts from GitHub.
+    Schedule 1 Save Support script from Hell.
 .DESCRIPTION
-    This script downloads and executes PowerShell scripts from a GitHub repository.
-    It manages a local directory in AppData\LocalLow to store the downloaded scripts,
-    placing them next to the game's TVGS folder.
+    This script manages Schedule 1 savegames in ways Tyler never wanted...
 .NOTES
     Author: Kage@GitHub Quadstronaut@Schedule1
     Version: 1.0
