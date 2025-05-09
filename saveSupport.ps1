@@ -42,8 +42,6 @@ function Get-SaveGame {
     )
     $save = [SaveGame]::new()
     $save.pathSaveGame = $SaveFolder
-    $save.saveIndex = $SaveIndex
-    $SaveIndex++
     try {
         # Load Game.json
         $gameFile = Join-Path $SaveFolder "Game.json"
@@ -86,11 +84,15 @@ function Get-SaveGame {
         if (Test-Path $moneyFile) {
             $moneyData = Get-Content -Path $moneyFile -Raw | ConvertFrom-Json
             $save.OnlineBalance = "{0:N0}" -f ([int]$moneyData.OnlineBalance)
-        } 
+        }
+        $save.saveIndex = $saveIndexValue
     }
     catch {
         Write-Warning "Error loading data for save in '$SaveFolder': $($_.Exception.Message)"
         return $null
+    }
+    finally{
+        $saveIndexValue += 1
     }
     return $save
 }
@@ -144,7 +146,7 @@ function Show-SaveGames {
         [Parameter(Mandatory = $true)]
         [string]$TitlePlural,
         [Parameter(Mandatory = $false)]
-        [array]$SaveData = 0 # A default is required because this could be a null value
+        [array]$SaveData = @()
     )
     if ($SaveData.Count -gt 0) {
         if ($SaveData.Count -eq 1) {
@@ -153,7 +155,7 @@ function Show-SaveGames {
         else {
             Write-Host "--- $TitlePlural ---"
         }
-        $SaveData | Format-Table SaveIndex, GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
+        $SaveData | Format-Table saveIndex, GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
     }
 }
 
@@ -192,7 +194,7 @@ else {
     }
 
     # Eat moar RAM
-    Set-Variable -Name saveIndex -Value 1 -Scope Script
+    Set-Variable -Name saveIndexValue -Value 1 -Scope Script
     $savepathSchedule1 = Set-LocationSchedule1Saves -Return $true
     $activeSaves = @()
     $unexpectedSaves = @()
@@ -252,41 +254,58 @@ else {
             }
         }
         Write-Host 'Make a selection:'
-        Write-Host 'B) Backup - Active > Vault'
-        Write-Host 'C) Cleanup manual backups'
-        Write-Host 'D) Delete a save - permanent!'
-        Write-Host 'I) Inspect a save'
-        Write-Host 'L) List saves'
-        Write-Host 'M) Modify a save - you cheater'
-        Write-Host 'R) Restore - Vault > Active'
+        Write-Host 'B) Backup - Game > Vault'
+        Write-Host 'C) Cleanup manual backups - permanent!'
+        Write-Host 'D) Delete a save - also permanent!'
+        Write-Host 'I) Inspect a save, closely'
+        Write-Host 'L) List all saves'
+        Write-Host 'M) Mix up a save, cheater'
+        Write-Host 'R) Restore - Vault > Game'
         Write-Host 'Q) Quit'
         $userInput = Read-Host "Select a number or Q to exit"
         switch ($userInput.ToUpper()) {
             'B' {
-                #TODO: BACKUP a save
+                # Backup - Game > Vault
+                $activeSavesCount = $activeSaves.Count
+                do {
+                    Clear-Host
+                    if ($activeSavesCount -eq 1) {
+                        Write-Host "--- Active Save ---"
+                    }
+                    else {
+                        Write-Host "--- Active Saves ---"
+                    }
+                    for ($i = 0; $i -lt $activeSaves.Count; $i++) {
+                        Write-Host "$($i + 1)`t$($activeSaves[$i].GameVersion)`t$($activeSaves[$i].OrganisationName)`t$($activeSaves[$i].LastPlayedDate)`t$($activeSaves[$i].ElapsedDays)`t$($activeSaves[$i].CashBalance)`t$($activeSaves[$i].OnlineBalance)"
+                    }
+                    $userInput = Read-Host "Please enter a value between 1 and $activeSavesCount"
+                    $isValidInput = $null -ne $userInput -as [int] -and $userInput -ge 1 -and $userInput -le $activeSavesCount
+                    if (-not $isValidInput) {
+                        Write-Host "Invalid input. Please enter a number between 1 and $activeSavesCount."
+                    }
+                } until ($isValidInput)
+                $selectedIndex = [int]$userInput - 1
+                Write-Host "You selected index: $selectedIndex (corresponding to the $($userInput)th item)."
+
+                # copy $activeSaves[$selectedIndex] to Vault
             }
             'C' {
-                $userInput = 'x'
-                # Bring it around town to make sure the user said something pseudo-intelligent
-                while (($userInput.ToUpper() -ne 'N') -or ($userInput.ToUpper() -ne 'Y')) {
+                # Cleanup manual backups
+                do {
                     Clear-Host
                     if ($unexpectedSaves.Count -ne 0) {
                         Show-SaveGames -TitleSingular 'Unexpected Save' -TitlePlural 'Unexpected Saves' -SaveData $unexpectedSaves
                         Write-Host 'This will delete ALL shown saves.' -ForegroundColor Yellow
-                        $userInput = Read-Host 'Are you sure? y/n'
                     }
-                    else {
-                        Write-Host "No manual saves found, amazing!" -ForegroundColor Green
-                        Start-Sleep -Seconds 1
-                    }
-                }
+                    $userInput = Read-Host 'Are you sure? y/n'
+                } until (($userInput.ToUpper() -eq 'N') -or ($userInput.ToUpper() -eq 'Y'))
                 if ($userInput.ToUpper() -eq 'Y') {
                     $total = $unexpectedSaves.count
                     $i = 1
-                    $progPercent = "{0:n2}" -f ([math]::round($i/$total,4) * 100)
+                    $progPercent = "{0:n2}" -f ([math]::round($i / $total, 4) * 100)
                     Write-Progress -Activity "Cleaning up..." -Status "$i of $total - $progPercent% Complete:" -PercentComplete $progPercent
                     foreach ($item in $unexpectedSaves) {
-                        $progPercent = "{0:n2}" -f ([math]::round($i/$total,4) * 100)
+                        $progPercent = "{0:n2}" -f ([math]::round($i / $total, 4) * 100)
                         Write-Progress -Activity "activityName" -Status "$i of $total - $progPercent% Complete:" -PercentComplete $progPercent
                         Remove-Item -Path $unexpectedSaves[$g].pathSaveGame -Recurse -Force -ErrorAction Continue -Verbose
                         $i++
@@ -295,7 +314,6 @@ else {
                     Pause
                 }
                 else {
-                    # $userInput = N
                     Clear-Host
                     Write-Host "Whew..."
                     Start-Sleep -Seconds 1
@@ -304,27 +322,73 @@ else {
                         Start-Sleep -Milliseconds 420
                         Write-Host "." -NoNewline
                     }
-                    Start-Sleep -Milliseconds 420
+                    Start-Sleep -Milliseconds 321
                 }
             }
             'D' {
-                #TODO: DELETE a save
+                # Delete a save
+                $userInput = 'x'
+                $unexpectedSavesCount = $unexpectedSaves.Count
+                $activeSavesCount = $activeSaves.Count
+                $vaultedSavesCount = $vaultedSaves.Count
+                
+                Write-Host "Which set of saves would you like to choose from?"
+                
+                $choices = @{}
+                $optionNumber = 1
+                
+                if ($activeSavesCount -gt 0) {
+                    Write-Host "$optionNumber. Active ($activeSavesCount)"
+                    $choices[$optionNumber] = "Active"
+                    $optionNumber++
+                }
+                else {
+                    Write-Host "Hey! Buddy! You gotta play the game first!" -ForegroundColor Red
+                }
+                
+                if ($unexpectedSavesCount -gt 0) {
+                    Write-Host "$optionNumber. Unexpected Saves ($unexpectedSavesCount)"
+                    $choices[$optionNumber] = "Unexpected"
+                    $optionNumber++
+                }
+                
+                if ($vaultedSavesCount -gt 0) {
+                    Write-Host "$optionNumber. Vaulted ($vaultedSavesCount)"
+                    $choices[$optionNumber] = "Vaulted"
+                    $optionNumber++
+                }
+                
+                do {
+                    $selection = Read-Host "Enter the number corresponding to your choice"
+                } until ($choices.ContainsKey([int]$selection))
+                
+                $selectedSaveType = $choices[[int]$selection]
+                Write-Host "You have chosen the '$selectedSaveType' saves."
+                # You can now proceed to work with the array corresponding to $selectedSaveType
+                # For example:
+                # if ($selectedSaveType -eq "Active") {
+                #     # Work with $activeSaves
+                # } elseif ($selectedSaveType -eq "Unexpected") {
+                #     # Work with $unexpectedSaves
+                # } elseif ($selectedSaveType -eq "Vaulted") {
+                #     # Work with $vaultedSaves
+                # }
             }
             'I' {
-                #TODO: INSPECT a save
+                # Inspect a save
             }
             'L' {
-                # List Saves
+                # List all saves
                 Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
                 Show-SaveGames -TitleSingular 'Unexpected Save' -TitlePlural 'Unexpected Saves' -SaveData $unexpectedSaves
                 Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
                 Pause
             }
             'M' {
-                #TODO: MODIFY a save
+                # Mix up a save
             }
             'R' {
-                #TODO: RESTORE a save
+                # Restore - Vault > Game
             }
             'Q' { $mnemonicLoop = $false }
             Default { $mnemonicLoop = $false }
