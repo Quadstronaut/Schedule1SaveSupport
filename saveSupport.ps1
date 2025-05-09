@@ -12,25 +12,109 @@
 #>
 
 ## Functions
-
 # Telemetry
 $timeStarted = Get-Date
 
-function Get-Function {
-    [CmdletBinding()]
-    param (
+function Get-SaveGame {
+    param(
         [Parameter(Mandatory = $true)]
-        [string]$functionName
+        [string]$SaveFolder
     )
-    if (Test-Path -Path $functionName -PathType Leaf) {
-        try { . $functionName }
-        catch {
-            Write-Error "Failed to execute script: $functionName. Error: $($_.Exception.Message)"
-            throw
+
+    $save = [SaveGame]::new()
+    $save.pathSaveGame = $SaveFolder
+
+    try {
+        # Load Game.json
+        $gameFile = Join-Path $SaveFolder "Game.json"
+        if (Test-Path $gameFile) {
+            $gameData = Get-Content -Path $gameFile -Raw | ConvertFrom-Json
+            $save.GameVersion = $gameData.GameVersion
+            $save.OrganisationName = $gameData.OrganisationName
+        }
+
+        # Load Metadata.json
+        $metadataFile = Join-Path $SaveFolder "Metadata.json"
+        if (Test-Path $metadataFile) {
+            $metaData = Get-Content -Path $metadataFile -Raw | ConvertFrom-Json
+            $save.LastPlayedDate = $metaData.LastPlayedDate.Year, $metaData.LastPlayedDate.Month, $metaData.LastPlayedDate.Day, $metaData.LastPlayedDate.Hour, $metaData.LastPlayedDate.Minute, $metaData.LastPlayedDate.Second -join "-"
+        }
+
+        # Load Time.json
+        $timeFile = Join-Path $SaveFolder "Time.json"
+        if (Test-Path $timeFile) {
+            $timeData = Get-Content -Path $timeFile -Raw | ConvertFrom-Json
+            $save.ElapsedDays = $timeData.ElapsedDays
+        }
+
+        # Load Player_0\Inventory.json
+        $inventoryFile = Join-Path $SaveFolder "player_0" "Inventory.json"
+        if (Test-Path $inventoryFile) {
+            $inventoryData = Get-Content -Path $inventoryFile -Raw | ConvertFrom-Json
+            foreach ($item in $inventoryData.Items) {
+                $itemObject = $item | ConvertFrom-Json
+                if ($itemObject.DataType -eq "CashData") {
+                    $save.CashBalance = $itemObject.CashBalance
+                    break # Assuming only one CashData entry
+                }
+            }
+        }
+
+        # Load Money.json
+        $moneyFile = Join-Path $SaveFolder "Money.json"
+        if (Test-Path $moneyFile) {
+            $moneyData = Get-Content -Path $moneyFile -Raw | ConvertFrom-Json
+            $save.OnlineBalance = $moneyData.OnlineBalance
         }
     }
+    catch {
+        Write-Warning "Error loading data for save in '$SaveFolder': $($_.Exception.Message)"
+        return $null
+    }
+
+    return $save
+}
+
+function Set-LocationSchedule1Saves {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [boolean]$Return = $false
+    )
+    # Construct the base path to the Schedule 1 saves.
+    $schedule1SavesPath = Join-Path -Path $localLowPath -ChildPath "TVGS\Schedule I\Saves"
+
+    # Check if the base saves directory exists.
+    if (-not (Test-Path -Path $schedule1SavesPath -PathType 'Container')) {
+        Write-Warning "The Schedule 1 saves directory does not exist at '$schedule1SavesPath'."
+        return  # Exit the function if the base directory doesn't exist.
+    }
+
+    # Get the subdirectories within the Saves directory (should be the Steam ID).
+    $steamIdDirectories = Get-ChildItem -Path $schedule1SavesPath -Directory
+
+    # Check if there are any subdirectories.
+    if ($steamIdDirectories.Count -eq 0) {
+        Write-Warning "No Steam ID directories found in '$schedule1SavesPath'."
+        return  # Exit if no Steam ID directory is found.
+    }
+
+    # Assume the first directory is the correct Steam ID.  This is usually the case.
+    $steamIdDirectory = $steamIdDirectories[0]
+    $saveLocation = Join-Path -Path $schedule1SavesPath -ChildPath $steamIdDirectory.Name
+
+    # Check if the final save location exists.
+    if (-not (Test-Path -Path $saveLocation -PathType 'Container')) {
+        Write-Warning "The Schedule 1 save directory does not exist at '$saveLocation'."
+        return  # Exit the function if the save directory doesn't exist.
+    }
+
+    # Handle location based on return flag.
+    if ($Return) {
+        return $saveLocation
+    }
     else {
-        Write-Warning "Script does not exist: $Path"
+        Set-Location -Path $saveLocation
     }
 }
 
@@ -102,17 +186,47 @@ try {
                     }
                 }
             }
-            
         }
-        catch {
-            
-            #TODO: Is this useful?
+        catch {}
+        finally {}
+
+        # Eat moar RAM
+        $savepathSchedule1 = Set-LocationSchedule1Saves -Return $true
+        $activeSaves = @()
+        $vaultedSaves = @()
+        $unexpectedSaves = @()
+
+        # Active Saves
+        for ($i = 1; $i -le 5; $i++) {
+            $saveFolderName = "SaveGame_$i"
+            $saveGamePath = Join-Path $savepathSchedule1 $saveFolderName
+            if (Test-Path $saveGamePath -PathType Container) {
+                $loadedSave = Get-SaveGame -SaveFolder $saveGamePath
+                if ($loadedSave) {
+                    $activeSaves += $loadedSave
+                }
+            }
         }
-        finally {
-            # Load all the things
 
-            $saveDirectories = @($s1ssPath)
+        # Unexpected Saves
+        $expectedSaveFolders = 1..5 | ForEach-Object { "SaveGame_$_" }
+        Get-ChildItem -Path $savepathSchedule1 -Directory | Where-Object { $_.Name -notin $expectedSaveFolders } | ForEach-Object {
+            $unexpectedSavePath = $_.FullName
+            $loadedSave = Get-SaveGame -SaveFolder $unexpectedSavePath
+            if ($loadedSave) {
+                $unexpectedSaves += $loadedSave
+            }
+        }
 
+        # Vaulted Saves
+        if (Test-Path $vaultPath -PathType Container) {
+            Get-ChildItem -Path $vaultPath -Directory | ForEach-Object {
+                $vaultedSavePath = $_.FullName
+                $loadedSave = Get-SaveGame -SaveFolder $vaultedSavePath
+                if ($loadedSave) {
+                    $vaultedSaves += $loadedSave
+                }
+            }
         }
 
         ## Save Support Super System
@@ -138,7 +252,15 @@ try {
                     #TODO: INSPECT a save
                 }
                 'L' {
-                    #TODO: LIST saves
+                    # List Saves
+                    Write-Host "--- Active Saves ---"
+                    $activeSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance, pathSaveGame -AutoSize
+
+                    Write-Host "--- Unexpected Saves ---"
+                    $unexpectedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance, pathSaveGame -AutoSize
+
+                    Write-Host "--- Vaulted Saves ---"
+                    $vaultedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance, pathSaveGame -AutoSize
                 }
                 'M' {
                     #TODO: MODIFY a save
