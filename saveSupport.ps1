@@ -87,16 +87,15 @@ function Set-LocationSchedule1Saves {
     # Check if the base saves directory exists.
     if (-not (Test-Path -Path $schedule1SavesPath -PathType 'Container')) {
         Write-Warning "The Schedule 1 saves directory does not exist at '$schedule1SavesPath'."
-        return  # Exit the function if the base directory doesn't exist.
+        return
     }
 
     # Get the subdirectories within the Saves directory (should be the Steam ID).
     $steamIdDirectories = Get-ChildItem -Path $schedule1SavesPath -Directory
 
-    # Check if there are any subdirectories.
     if ($steamIdDirectories.Count -eq 0) {
         Write-Warning "No Steam ID directories found in '$schedule1SavesPath'."
-        return  # Exit if no Steam ID directory is found.
+        return
     }
 
     # Assume the first directory is the correct Steam ID.  This is usually the case.
@@ -106,7 +105,7 @@ function Set-LocationSchedule1Saves {
     # Check if the final save location exists.
     if (-not (Test-Path -Path $saveLocation -PathType 'Container')) {
         Write-Warning "The Schedule 1 save directory does not exist at '$saveLocation'."
-        return  # Exit the function if the save directory doesn't exist.
+        return
     }
 
     # Handle location based on return flag.
@@ -273,26 +272,22 @@ else {
         }
     }
 }
-try {
-    $timeComplete = Get-Date
-}
-finally {
-    $timeTaken = $timeComplete - $timeStarted
-    $days = $timeTaken.Days
-    $hours = $timeTaken.Hours
-    $minutes = $timeTaken.Minutes
-    $seconds = $timeTaken.Seconds
-    $milliseconds = $timeTaken.Milliseconds
-    if ($days -ne 1) { $dayString = "days" } else { $dayString = "day" }
-    if ($hours -ne 1) { $hourString = "hours" } else { $hourString = "hour" }
-    if ($minutes -ne 1) { $minuteString = "minutes" } else { $minuteString = "minute" }
-    if ($seconds -ne 1) { $secondString = "seconds" } else { $secondString = "second" }
-    if ($milliseconds -ne 1) { $millisecondString = "milliseconds" } else { $millisecondString = "millisecond" }
-    Write-Host "You just wasted " -NoNewline
-    if ($days -gt 0) { Write-Host "$days $dayString, " -NoNewline }
-    if ($hours -gt 0) { Write-Host "$hours $hourString, " -NoNewline }
-    if ($minutes -gt 0) { Write-Host "$minutes $minuteString, " -NoNewline }
-    if ($seconds -gt 0) { Write-Host "$seconds $secondString, " -NoNewline }
-    Write-Host "$milliseconds $millisecondString. Unbelievable."
-}
+$timeComplete = Get-Date
+$timeTaken = $timeComplete - $timeStarted
+$days = $timeTaken.Days
+$hours = $timeTaken.Hours
+$minutes = $timeTaken.Minutes
+$seconds = $timeTaken.Seconds
+$milliseconds = $timeTaken.Milliseconds
+if ($days -ne 1) { $dayString = "days" } else { $dayString = "day" }
+if ($hours -ne 1) { $hourString = "hours" } else { $hourString = "hour" }
+if ($minutes -ne 1) { $minuteString = "minutes" } else { $minuteString = "minute" }
+if ($seconds -ne 1) { $secondString = "seconds" } else { $secondString = "second" }
+if ($milliseconds -ne 1) { $millisecondString = "milliseconds" } else { $millisecondString = "millisecond" }
+Write-Host "You just wasted " -NoNewline
+if ($days -gt 0) { Write-Host "$days $dayString, " -NoNewline }
+if ($hours -gt 0) { Write-Host "$hours $hourString, " -NoNewline }
+if ($minutes -gt 0) { Write-Host "$minutes $minuteString, " -NoNewline }
+if ($seconds -gt 0) { Write-Host "$seconds $secondString, " -NoNewline }
+Write-Host "$milliseconds $millisecondString. Unbelievable."
 # Thanks for using my script. <3
