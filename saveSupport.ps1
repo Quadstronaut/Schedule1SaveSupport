@@ -14,18 +14,18 @@
 ## Functions
 
 # Telemetry
-$timeStart = Get-Date
+$timeStarted = Get-Date
 
 function Get-Function {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
-        [string]$Name
+        [string]$functionName
     )
-    if (Test-Path -Path $Name -PathType Leaf) {
-        try { . $Name }
+    if (Test-Path -Path $functionName -PathType Leaf) {
+        try { . $functionName }
         catch {
-            Write-Error "Failed to execute script: $Name. Error: $($_.Exception.Message)"
+            Write-Error "Failed to execute script: $functionName. Error: $($_.Exception.Message)"
             throw
         }
     }
@@ -41,24 +41,21 @@ try {
     $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
     $s1ssPath = Join-Path -Path $localLowPath -ChildPath $localDirName
     $zipEncode = 'aHR0cHM6Ly9naXRodWIuY29tL0dpdEtBZ2VIdWIvU2NoZWR1bGUxU2F2ZVN1cHBvcnQvYXJjaGl2ZS9yZWZzL2hlYWRzL21hc3Rlci56aXA='
-
-    # Ensure the local directory exists
-    $directoryEnsured = Test-Path -Path $s1ssPath
-
-    if (-not($directoryEnsured)) {
-        New-Item -Path $s1ssPath -ItemType Directory -ErrorAction Stop
+    $directoryFound = Test-Path -Path $s1ssPath
+    if (-not($directoryFound)) {
+        New-Item -Path $s1ssPath -ItemType Directory -Force -ErrorAction Stop -Verbose
         try {
-            # Make a temp
-            $tempDirName = New-Guid
+            # Make a temp location
+            $tempDirName = New-Guid #guids avoids collisions, simpler to implement than Get-Random
             $tempDirPath = Join-Path -Path $env:TEMP -ChildPath $tempDirName
-            New-Item -Path $tempDirPath -ItemType Directory
+            New-Item -Path $tempDirPath -ItemType Directory -Force -ErrorAction Stop -Verbose
 
-            # Download master.zip to temp
+            # Download zip to temp
             $zipBytes = [System.Convert]::FromBase64String($zipEncode)
             $zipUrl = [System.Text.Encoding]::UTF8.GetString($zipBytes)
             Write-Host "Downloading scripts from GitHub to $tempDirPath" -ForegroundColor Cyan
             $zipFile = Join-Path -Path $tempDirPath -ChildPath 's1ss_temp.zip'
-            Invoke-WebRequest -Uri $ZipUrl -OutFile $zipFile -ErrorAction Stop
+            Invoke-WebRequest -Uri $ZipUrl -OutFile $zipFile -ErrorAction Stop -UseBasicParsing -Verbose
 
             # Extract the contents
             Write-Host "Extracting scripts to $s1ssPath" -ForegroundColor Cyan
@@ -79,17 +76,43 @@ try {
         $vaultPath = Join-Path -Path $s1ssPath -ChildPath 'Vault'
         $localVaultFound = Test-Path $vaultPath -PathType Container
         try {
-            if (-not($localVaultFound)) {
-                ## New Vault
+            $ReadyToSupport = $false
+            while (-not($ReadyToSupport)) {
+                if (-not($localVaultFound)) {
+                    ## New Vault
+                    New-Item -path $vaultPath -ItemType Directory -Force -ErrorAction Stop -Verbose
+                    $ReadyToSupport = $true
+                }
+                else {
+                    ## Load Vault
+                    class SaveGame {
+                        #Game.json
+                        $GameVersion
+                        $OrganisationName
+                        #Metadata.json
+                        $LastPlayedDate
+                        #Time.json
+                        $ElapsedDays
+                        #Player_0/Inventory.json
+                        $CashBalance
+                        #Money.json
+                        $OnlineBalance
+                        # Path to SaveGame
+                        $pathSaveGame
+                    }
+                }
             }
-            else {
-                ## Load Vault
-                #TODO: Load vault from $vaultPath
-            }
+            
         }
         catch {
+            
+            #TODO: Is this useful?
         }
         finally {
+            # Load all the things
+
+            $saveDirectories = @($s1ssPath)
+
         }
 
         ## Save Support Super System
