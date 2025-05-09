@@ -42,6 +42,8 @@ function Get-SaveGame {
     )
     $save = [SaveGame]::new()
     $save.pathSaveGame = $SaveFolder
+    $save.saveIndex = $SaveIndex
+    $SaveIndex++
     try {
         # Load Game.json
         $gameFile = Join-Path $SaveFolder "Game.json"
@@ -84,7 +86,7 @@ function Get-SaveGame {
         if (Test-Path $moneyFile) {
             $moneyData = Get-Content -Path $moneyFile -Raw | ConvertFrom-Json
             $save.OnlineBalance = "{0:N0}" -f ([int]$moneyData.OnlineBalance)
-        }
+        } 
     }
     catch {
         Write-Warning "Error loading data for save in '$SaveFolder': $($_.Exception.Message)"
@@ -151,7 +153,7 @@ function Show-SaveGames {
         else {
             Write-Host "--- $TitlePlural ---"
         }
-        $SaveData | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
+        $SaveData | Format-Table SaveIndex, GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
     }
 }
 
@@ -171,7 +173,9 @@ else {
     if (-not($localVaultFound)) {
         New-Item -path $vaultPath -ItemType Directory -Force -ErrorAction Stop -Verbose
     }
+  
     class SaveGame {
+        $saveIndex
         #Game.json
         $GameVersion
         $OrganisationName
@@ -188,13 +192,13 @@ else {
     }
 
     # Eat moar RAM
+    Set-Variable -Name saveIndex -Value 1 -Scope Script
     $savepathSchedule1 = Set-LocationSchedule1Saves -Return $true
     $activeSaves = @()
-    $vaultedSaves = @()
     $unexpectedSaves = @()
+    $vaultedSaves = @()
 
     # Active Saves
-    Write-Host "DEBUG: Active Saves"
     for ($i = 1; $i -le 5; $i++) {
         $saveFolderName = "SaveGame_$i"
         $saveGamePath = Join-Path $savepathSchedule1 $saveFolderName
@@ -207,7 +211,6 @@ else {
     }
 
     # Unexpected Saves
-    Write-Host "DEBUG: Unexpected Saves"
     $expectedSaveFolders = 1..5 | ForEach-Object { "SaveGame_$_" }
     Get-ChildItem -Path $savepathSchedule1 -Directory | Where-Object { $_.Name -notin $expectedSaveFolders } | ForEach-Object {
         $unexpectedSavePath = $_.FullName
@@ -218,7 +221,6 @@ else {
     }
 
     # Vaulted Saves
-    Write-Host "DEBUG: Vaulted Saves"
     if (Test-Path $vaultPath -PathType Container) {
         Get-ChildItem -Path $vaultPath -Directory | ForEach-Object {
             $vaultedSavePath = $_.FullName
@@ -250,21 +252,63 @@ else {
             }
         }
         Write-Host 'Make a selection:'
-        Write-Host 'B) Backup a save'
-        Write-Host 'D) Delete a save'
+        Write-Host 'B) Backup - Active > Vault'
+        Write-Host 'C) Cleanup manual backups'
+        Write-Host 'D) Delete a save - permanent!'
         Write-Host 'I) Inspect a save'
         Write-Host 'L) List saves'
-        Write-Host 'M) Modify a save'
-        Write-Host 'R) Restore a save'
+        Write-Host 'M) Modify a save - you cheater'
+        Write-Host 'R) Restore - Vault > Active'
         Write-Host 'Q) Quit'
         $userInput = Read-Host "Select a number or Q to exit"
-        Clear-Host
         switch ($userInput.ToUpper()) {
             'B' {
                 #TODO: BACKUP a save
             }
+            'C' {
+                $userInput = 'x'
+                # Bring it around town to make sure the user said something pseudo-intelligent
+                while (($userInput.ToUpper() -ne 'N') -or ($userInput.ToUpper() -ne 'Y')) {
+                    Clear-Host
+                    if ($unexpectedSaves.Count -ne 0) {
+                        Show-SaveGames -TitleSingular 'Unexpected Save' -TitlePlural 'Unexpected Saves' -SaveData $unexpectedSaves
+                        Write-Host 'This will delete ALL shown saves.' -ForegroundColor Yellow
+                        $userInput = Read-Host 'Are you sure? y/n'
+                    }
+                    else {
+                        Write-Host "No manual saves found, amazing!" -ForegroundColor Green
+                        Start-Sleep -Seconds 1
+                    }
+                }
+                if ($userInput.ToUpper() -eq 'Y') {
+                    $total = $unexpectedSaves.count
+                    $i = 1
+                    $progPercent = "{0:n2}" -f ([math]::round($i/$total,4) * 100)
+                    Write-Progress -Activity "Cleaning up..." -Status "$i of $total - $progPercent% Complete:" -PercentComplete $progPercent
+                    foreach ($item in $unexpectedSaves) {
+                        $progPercent = "{0:n2}" -f ([math]::round($i/$total,4) * 100)
+                        Write-Progress -Activity "activityName" -Status "$i of $total - $progPercent% Complete:" -PercentComplete $progPercent
+                        Remove-Item -Path $unexpectedSaves[$g].pathSaveGame -Recurse -Force -ErrorAction Continue -Verbose
+                        $i++
+                    }
+                    Clear-Variable -Name unexpectedSaves -ErrorAction SilentlyContinue
+                    Pause
+                }
+                else {
+                    # $userInput = N
+                    Clear-Host
+                    Write-Host "Whew..."
+                    Start-Sleep -Seconds 1
+                    Write-Host "Close one" -NoNewline
+                    for ($g = 1; $g -le 3; $g++) {
+                        Start-Sleep -Milliseconds 420
+                        Write-Host "." -NoNewline
+                    }
+                    Start-Sleep -Milliseconds 420
+                }
+            }
             'D' {
-                #TODO: BACKUP a save
+                #TODO: DELETE a save
             }
             'I' {
                 #TODO: INSPECT a save
