@@ -15,6 +15,15 @@
 # Telemetry
 $timeStarted = Get-Date
 
+function Get-AdministratorStatus () {
+    if ([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        return $true
+    }
+    else {
+        return $false
+    }
+}
+
 function Get-SaveGame {
     param(
         [Parameter(Mandatory = $true)]
