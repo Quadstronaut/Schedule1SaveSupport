@@ -12,17 +12,34 @@
 #>
 
 ## Functions
+
+# Check if the script is running with administrative privileges
+$IsAdmin = ([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+# If not running as administrator, display an error message and exit
+if (-not $IsAdmin) {
+    # Use Write-Host for colored output and user-friendly message
+    Write-Host "Error: This script requires administrative privileges to run." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "To run this script with administrator rights, please follow these steps:" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  1.  Click the Start button (usually in the bottom-left corner of your screen)." -ForegroundColor Cyan
+    Write-Host "  2.  Type 'PowerShell' (or 'pwsh' for PowerShell 7) in the search bar." -ForegroundColor Cyan
+    Write-Host "  3.  Right-click on 'Windows PowerShell' (or 'PowerShell 7') in the search results." -ForegroundColor Cyan
+    Write-Host "  4.  Select 'Run as administrator' from the context menu." -ForegroundColor Cyan
+    Write-Host "  5.  If prompted, click 'Yes' to allow the app to make changes to your device." -ForegroundColor Cyan
+    Write-Host "  6.  Once the elevated PowerShell window is open, navigate to the location of this script" -ForegroundColor Cyan
+    Write-Host "      using the 'cd' command (e.g., cd ~\Downloads\saveSupport.ps1)." -ForegroundColor Cyan
+    Write-Host "  7.  Finally, run the script again by typing its name and pressing Enter." -ForegroundColor Cyan
+    Write-Host "  8.  Close this PowerShell window now that you've completed all steps." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Sorry about the inconvenience."
+    Write-Host "Good luck!" -ForegroundColor Green
+    exit  # Stop script execution
+}
+
 # Telemetry
 $timeStarted = Get-Date
-
-function Get-AdministratorStatus () {
-    if ([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        return $true
-    }
-    else {
-        return $false
-    }
-}
 
 function Get-SaveGame {
     param(
@@ -57,7 +74,8 @@ function Get-SaveGame {
         }
 
         # Load Player_0\Inventory.json
-        $inventoryFile = Join-Path $SaveFolder "player_0" "Inventory.json"
+        $player_0 = Join-Path -Path $SaveFolder -ChildPath 'Players\Player_0'
+        $inventoryFile = Join-Path $player_0 "Inventory.json"
         if (Test-Path $inventoryFile) {
             $inventoryData = Get-Content -Path $inventoryFile -Raw | ConvertFrom-Json
             foreach ($item in $inventoryData.Items) {
