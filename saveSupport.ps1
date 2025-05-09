@@ -15,10 +15,7 @@
 
 # Check if the script is running with administrative privileges
 $IsAdmin = ([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-# If not running as administrator, display an error message and exit
 if (-not $IsAdmin) {
-    # Use Write-Host for colored output and user-friendly message
     Write-Host "Error: This script requires administrative privileges to run." -ForegroundColor Red
     Write-Host ""
     Write-Host "To run this script with administrator rights, please follow these steps:" -ForegroundColor Yellow
@@ -33,9 +30,8 @@ if (-not $IsAdmin) {
     Write-Host "  7.  Finally, run the script again by typing its name and pressing Enter." -ForegroundColor Cyan
     Write-Host "  8.  Close this PowerShell window now that you've completed all steps." -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Sorry about the inconvenience."
-    Write-Host "Good luck!" -ForegroundColor Green
-    exit  # Stop script execution
+    Write-Host "Sorry about the inconvenience, testing deemed it necessary."
+    exit
 }
 
 # Telemetry
