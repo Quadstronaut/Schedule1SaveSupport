@@ -140,18 +140,19 @@ function Set-LocationSchedule1Saves {
 
 function Show-SaveGames {
     param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$TitleSingular,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$TitlePlural,
-        [Parameter(Mandatory=$true)]
-        [array]$SaveData
+        [Parameter(Mandatory = $false)]
+        [array]$SaveData = 0 # Default to 0 so as not to crash on a lack of vaulted or unexpected saves
     )
 
     if ($SaveData.Count -gt 0) {
         if ($SaveData.Count -eq 1) {
             Write-Host "--- $TitleSingular ---"
-        } else {
+        }
+        else {
             Write-Host "--- $TitlePlural ---"
         }
         $SaveData | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
@@ -276,39 +277,9 @@ else {
             }
             'L' {
                 # List Saves
-                switch ($unexpectedSaves.Count) {
-                    '0' { $unexpectedSaves | Out-Null }
-                    '1' {
-                        Write-Host '--- Active Save ---'
-                        $activeSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
-                    }
-                    Default {
-                        Write-Host '--- Active Saves ---'
-                        $activeSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
-                    }
-                }
-                switch ($unexpectedSaves.Count) {
-                    '0' { $unexpectedSaves | Out-Null }
-                    '1' {
-                        Write-Host '--- Unexpected Save ---'
-                        $unexpectedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
-                    }
-                    Default {
-                        Write-Host '--- Unexpected Saves ---'
-                        $unexpectedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
-                    }
-                }
-                switch ($vaultedSaves.Count) {
-                    '0' { $vaultedSaves | Out-Null }
-                    '1' {
-                        Write-Host '--- Vaulted Save ---'
-                        $vaultedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
-                    }
-                    Default {
-                        Write-Host '--- Vaulted Saves ---'
-                        $vaultedSaves | Format-Table GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance -AutoSize
-                    }
-                }
+                Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
+                Show-SaveGames -TitleSingular 'Unexpected Save' -TitlePlural 'Unexpected Saves' -SaveData $unexpectedSaves
+                Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
                 Pause
             }
             'M' {
