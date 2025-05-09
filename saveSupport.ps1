@@ -277,17 +277,7 @@ try {
     $timeComplete = Get-Date
 }
 finally {
-    
-    # Calculate the time difference
     $timeTaken = $timeComplete - $timeStarted
-
-    # Output the result in total seconds
-    Write-Host "Script executed in $($timeTaken.TotalSeconds) seconds."
-
-    # Output the result in a more human-readable format
-    Write-Host "Script execution time: $($timeTaken.Days) days, $($timeTaken.Hours) hours, $($timeTaken.Minutes) minutes, $($timeTaken.Seconds) seconds, $($timeTaken.Milliseconds) milliseconds."
-
-    # A slightly more natural English output (Handles singular/plural)
     $days = $timeTaken.Days
     $hours = $timeTaken.Hours
     $minutes = $timeTaken.Minutes
@@ -305,7 +295,7 @@ finally {
     $millisecondString = "millisecond"
     if ($milliseconds -ne 1) { $millisecondString = "milliseconds" }
 
-    Write-Host "Script took: " -NoNewline
+    Write-Host "You just wasted " -NoNewline
     if ($days -gt 0) {
         Write-Host "$days $dayString, " -NoNewline
     }
@@ -318,5 +308,5 @@ finally {
     if ($seconds -gt 0) {
         Write-Host "$seconds $secondString, " -NoNewline
     }
-    Write-Host "$milliseconds $millisecondString."
+    Write-Host "$milliseconds $millisecondString. Unbelievable."
 }
