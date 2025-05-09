@@ -119,120 +119,90 @@ function Set-LocationSchedule1Saves {
 
 ## Sanity Logic
 
-
 $localDirName = 'S1SS' # goes the snake
 $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
 $s1ssPath = Join-Path -Path $localLowPath -ChildPath $localDirName
-$zipEncode = 'aHR0cHM6Ly9naXRodWIuY29tL0dpdEtBZ2VIdWIvU2NoZWR1bGUxU2F2ZVN1cHBvcnQvYXJjaGl2ZS9yZWZzL2hlYWRzL21hc3Rlci56aXA='
 $directoryFound = Test-Path -Path $s1ssPath
+
+# Prepare to handle saves
 if (-not($directoryFound)) {
     New-Item -Path $s1ssPath -ItemType Directory -Force -ErrorAction Stop -Verbose
-    try {
-        # Make a temp location
-        $tempDirName = New-Guid #guids avoids collisions, simpler to implement than Get-Random
-        $tempDirPath = Join-Path -Path $env:TEMP -ChildPath $tempDirName
-        New-Item -Path $tempDirPath -ItemType Directory -Force -ErrorAction Stop -Verbose
-
-        # Download zip to temp
-        $zipBytes = [System.Convert]::FromBase64String($zipEncode)
-        $zipUrl = [System.Text.Encoding]::UTF8.GetString($zipBytes)
-        Write-Host "Downloading scripts from GitHub to $tempDirPath" -ForegroundColor Cyan
-        $zipFile = Join-Path -Path $tempDirPath -ChildPath 's1ss_temp.zip'
-        Invoke-WebRequest -Uri $ZipUrl -OutFile $zipFile -ErrorAction Stop -UseBasicParsing -Verbose
-
-        # Extract the contents
-        Write-Host "Extracting scripts to $s1ssPath" -ForegroundColor Cyan
-        Expand-Archive -Path $zipFile -DestinationPath $s1ssPath -Force -ErrorAction Stop
-    }
-    catch {
-        Write-Error "Error downloading or extracting scripts: $($_.Exception.Message)"
-        throw  # Re-throw the error to be caught by calling script
-    }
-    finally {
-        # Clean up
-        Write-Host "Extraction complete, cleaning up temporary files." -ForegroundColor Green
-        Remove-Item -Path $tempDirPath -Recurse -Force -ErrorAction SilentlyContinue
-    }
 }
 else {
     # Look for existing vault
     $vaultPath = Join-Path -Path $s1ssPath -ChildPath 'Vault'
     $localVaultFound = Test-Path $vaultPath -PathType Container
-    try {
-        $ReadyToSupport = $false
-        while (-not($ReadyToSupport)) {
-            if (-not($localVaultFound)) {
-                ## New Vault
-                New-Item -path $vaultPath -ItemType Directory -Force -ErrorAction Stop -Verbose
-                $ReadyToSupport = $true
+    $ReadyToSupport = $false
+    while (-not($ReadyToSupport)) {
+        if (-not($localVaultFound)) {
+            ## New Vault
+            New-Item -path $vaultPath -ItemType Directory -Force -ErrorAction Stop -Verbose
+            $ReadyToSupport = $true
+        }
+        else {
+            ## Load Vault
+            class SaveGame {
+                #Game.json
+                $GameVersion
+                $OrganisationName
+                #Metadata.json
+                $LastPlayedDate
+                #Time.json
+                $ElapsedDays
+                #Player_0/Inventory.json
+                $CashBalance
+                #Money.json
+                $OnlineBalance
+                # Path to SaveGame
+                $pathSaveGame
             }
-            else {
-                ## Load Vault
-                class SaveGame {
-                    #Game.json
-                    $GameVersion
-                    $OrganisationName
-                    #Metadata.json
-                    $LastPlayedDate
-                    #Time.json
-                    $ElapsedDays
-                    #Player_0/Inventory.json
-                    $CashBalance
-                    #Money.json
-                    $OnlineBalance
-                    # Path to SaveGame
-                    $pathSaveGame
+
+            # Eat moar RAM
+            $savepathSchedule1 = Set-LocationSchedule1Saves -Return $true
+            $activeSaves = @()
+            $vaultedSaves = @()
+            $unexpectedSaves = @()
+
+            # Active Saves
+            for ($i = 1; $i -le 5; $i++) {
+                $saveFolderName = "SaveGame_$i"
+                $saveGamePath = Join-Path $savepathSchedule1 $saveFolderName
+                if (Test-Path $saveGamePath -PathType Container) {
+                    $loadedSave = Get-SaveGame -SaveFolder $saveGamePath
+                    if ($loadedSave) {
+                        $activeSaves += $loadedSave
+                    }
+                }
+            }
+
+            # Unexpected Saves
+            $expectedSaveFolders = 1..5 | ForEach-Object { "SaveGame_$_" }
+            Get-ChildItem -Path $savepathSchedule1 -Directory | Where-Object { $_.Name -notin $expectedSaveFolders } | ForEach-Object {
+                $unexpectedSavePath = $_.FullName
+                $loadedSave = Get-SaveGame -SaveFolder $unexpectedSavePath
+                if ($loadedSave) {
+                    $unexpectedSaves += $loadedSave
+                }
+            }
+
+            # Vaulted Saves
+            if (Test-Path $vaultPath -PathType Container) {
+                Get-ChildItem -Path $vaultPath -Directory | ForEach-Object {
+                    $vaultedSavePath = $_.FullName
+                    $loadedSave = Get-SaveGame -SaveFolder $vaultedSavePath
+                    if ($loadedSave) {
+                        $vaultedSaves += $loadedSave
+                    }
                 }
             }
         }
     }
-    catch {}
-    finally {}
 
-    # Eat moar RAM
-    $savepathSchedule1 = Set-LocationSchedule1Saves -Return $true
-    $activeSaves = @()
-    $vaultedSaves = @()
-    $unexpectedSaves = @()
-
-    # Active Saves
-    for ($i = 1; $i -le 5; $i++) {
-        $saveFolderName = "SaveGame_$i"
-        $saveGamePath = Join-Path $savepathSchedule1 $saveFolderName
-        if (Test-Path $saveGamePath -PathType Container) {
-            $loadedSave = Get-SaveGame -SaveFolder $saveGamePath
-            if ($loadedSave) {
-                $activeSaves += $loadedSave
-            }
-        }
-    }
-
-    # Unexpected Saves
-    $expectedSaveFolders = 1..5 | ForEach-Object { "SaveGame_$_" }
-    Get-ChildItem -Path $savepathSchedule1 -Directory | Where-Object { $_.Name -notin $expectedSaveFolders } | ForEach-Object {
-        $unexpectedSavePath = $_.FullName
-        $loadedSave = Get-SaveGame -SaveFolder $unexpectedSavePath
-        if ($loadedSave) {
-            $unexpectedSaves += $loadedSave
-        }
-    }
-
-    # Vaulted Saves
-    if (Test-Path $vaultPath -PathType Container) {
-        Get-ChildItem -Path $vaultPath -Directory | ForEach-Object {
-            $vaultedSavePath = $_.FullName
-            $loadedSave = Get-SaveGame -SaveFolder $vaultedSavePath
-            if ($loadedSave) {
-                $vaultedSaves += $loadedSave
-            }
-        }
-    }
-
-    ## Save Support Super System
+    ## Save Support
 
     $mnemonicLoop = $true
     while ($true -eq $mnemonicLoop) {
-        # TODO: Menu for user input
+        Clear-Host
         Write-Host "Schedule 1 Save Support`n"
         Write-Host 'Make a selection:'
         Write-Host 'B) Backup a save'
@@ -290,4 +260,3 @@ if ($hours -gt 0) { Write-Host "$hours $hourString, " -NoNewline }
 if ($minutes -gt 0) { Write-Host "$minutes $minuteString, " -NoNewline }
 if ($seconds -gt 0) { Write-Host "$seconds $secondString, " -NoNewline }
 Write-Host "$milliseconds $millisecondString. Unbelievable."
-# Thanks for using my script. <3
