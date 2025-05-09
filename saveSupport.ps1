@@ -283,30 +283,16 @@ finally {
     $minutes = $timeTaken.Minutes
     $seconds = $timeTaken.Seconds
     $milliseconds = $timeTaken.Milliseconds
-
-    $dayString = "day"
-    if ($days -ne 1) { $dayString = "days" }
-    $hourString = "hour"
-    if ($hours -ne 1) { $hourString = "hours" }
-    $minuteString = "minute"
-    if ($minutes -ne 1) { $minuteString = "minutes" }
-    $secondString = "second"
-    if ($seconds -ne 1) { $secondString = "seconds" }
-    $millisecondString = "millisecond"
-    if ($milliseconds -ne 1) { $millisecondString = "milliseconds" }
-
+    if ($days -ne 1) { $dayString = "days" } else { $dayString = "day" }
+    if ($hours -ne 1) { $hourString = "hours" } else { $hourString = "hour" }
+    if ($minutes -ne 1) { $minuteString = "minutes" } else { $minuteString = "minute" }
+    if ($seconds -ne 1) { $secondString = "seconds" } else { $secondString = "second" }
+    if ($milliseconds -ne 1) { $millisecondString = "milliseconds" } else { $millisecondString = "millisecond" }
     Write-Host "You just wasted " -NoNewline
-    if ($days -gt 0) {
-        Write-Host "$days $dayString, " -NoNewline
-    }
-    if ($hours -gt 0) {
-        Write-Host "$hours $hourString, " -NoNewline
-    }
-    if ($minutes -gt 0) {
-        Write-Host "$minutes $minuteString, " -NoNewline
-    }
-    if ($seconds -gt 0) {
-        Write-Host "$seconds $secondString, " -NoNewline
-    }
+    if ($days -gt 0) { Write-Host "$days $dayString, " -NoNewline }
+    if ($hours -gt 0) { Write-Host "$hours $hourString, " -NoNewline }
+    if ($minutes -gt 0) { Write-Host "$minutes $minuteString, " -NoNewline }
+    if ($seconds -gt 0) { Write-Host "$seconds $secondString, " -NoNewline }
     Write-Host "$milliseconds $millisecondString. Unbelievable."
 }
+# Thanks for using my script. <3
