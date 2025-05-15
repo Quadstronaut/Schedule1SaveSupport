@@ -2,16 +2,22 @@
 .SYNOPSIS
   Schedule 1 Save Support script from Hell.
 .DESCRIPTION
-  This script manages Schedule 1 savegames in ways Tyler never wanted...
+  This script manages Schedule 1 savegames in ways Tyler never conceived anyone would waste the time on. I like his
+  import export feature, but that still requires me to manage my own files. Gross. I introduce to you the concept of
+  a save vault. I'm reserving a folder right next to the game's where the saves are stored. I will move saves in and
+  out of that folder for you, keeping track of all the details. No work, just managing your saves like an automation
+  engineer does. Please make use of my GitHub repository GitKageHub/Schedule1SaveSupport to find documentation, report
+  issues, etc.
 .NOTES
   Author: Kage@GitHub Quadstronaut@Schedule1
   Version: 1.0
   GitHub Repository: https://github.com/GitKageHub/Schedule1SaveSupport
 #>
 
-## Functions
+## Functions - These are the bits of code I reuse many times through the script.
 
-# Check if the script is running with administrative privileges
+# Check if the script is running with administrative privileges - testing shows this is necessary, though I don't believe that to be true.
+# [ ]: Verify if this is truly a requirement
 $IsAdmin = ([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $IsAdmin) {
     Write-Host "Error: This script requires administrative privileges to run." -ForegroundColor Red
@@ -36,6 +42,7 @@ if (-not $IsAdmin) {
 $timeStarted = Get-Date
 
 function Get-TimeWasted {
+    # [x]: Function tested - Get-TimeWasted
     param(
         [Parameter(Mandatory = $true)]
         [datetime]$timeStarted
@@ -57,10 +64,12 @@ function Get-TimeWasted {
     if ($hours -gt 0) { Write-Host "$hours $hourString, " -NoNewline }
     if ($minutes -gt 0) { Write-Host "$minutes $minuteString, " -NoNewline }
     if ($seconds -gt 0) { Write-Host "$seconds $secondString, " -NoNewline }
+    # [ ]: Verify max condescension
     Write-Host "$milliseconds $millisecondString. Unbelievable."
 }
 
 function Get-SaveGame {
+    # [ ]: Function tested - Get-SaveGame
     param(
         [Parameter(Mandatory = $true)]
         [string]$SaveFolder,
@@ -70,7 +79,7 @@ function Get-SaveGame {
     $save = [SaveGame]::new()
     $save.pathSaveGame = $SaveFolder
     try {
-        # Load Game.json
+        # Load Game.json from SaveGame
         $gameFile = Join-Path $SaveFolder "Game.json"
         if (Test-Path $gameFile) {
             $gameData = Get-Content -Path $gameFile -Raw | ConvertFrom-Json
@@ -78,21 +87,21 @@ function Get-SaveGame {
             $save.OrganisationName = $gameData.OrganisationName
         }
 
-        # Load Metadata.json
+        # Load Metadata.json from SaveGame
         $metadataFile = Join-Path $SaveFolder "Metadata.json"
         if (Test-Path $metadataFile) {
             $metaData = Get-Content -Path $metadataFile -Raw | ConvertFrom-Json
             $save.LastPlayedDate = $metaData.LastPlayedDate.Year, $metaData.LastPlayedDate.Month, $metaData.LastPlayedDate.Day, $metaData.LastPlayedDate.Hour, $metaData.LastPlayedDate.Minute, $metaData.LastPlayedDate.Second -join "-"
         }
 
-        # Load Time.json
+        # Load Time.json from SaveGame
         $timeFile = Join-Path $SaveFolder "Time.json"
         if (Test-Path $timeFile) {
             $timeData = Get-Content -Path $timeFile -Raw | ConvertFrom-Json
             $save.ElapsedDays = $timeData.ElapsedDays
         }
 
-        # Load Player_0\Inventory.json
+        # Load Player_0\Inventory.json from SaveGame
         $player_0 = Join-Path -Path $SaveFolder -ChildPath 'Players\Player_0'
         $inventoryFile = Join-Path $player_0 "Inventory.json"
         if (Test-Path $inventoryFile) {
@@ -101,7 +110,7 @@ function Get-SaveGame {
                 $itemObject = $item | ConvertFrom-Json
                 if ($itemObject.DataType -eq "CashData") {
                     $save.CashBalance = "{0:N0}" -f ([int]$itemObject.CashBalance)
-                    break # Assuming only one CashData entry
+                    break # [ ]: Verify maximum CashData entry count
                 }
             }
         }
@@ -118,10 +127,12 @@ function Get-SaveGame {
         Write-Warning "Error loading data for save in '$SaveFolder': $($_.Exception.Message)"
         return $null
     }
+    # [ ]: Validate this data
     return $save
 }
 
 function Set-LocationSchedule1Saves {
+    # [x]: Function tested - Set-LocationSchedule1Saves
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $false)]
@@ -164,6 +175,7 @@ function Set-LocationSchedule1Saves {
 }
 
 function Show-SaveGames {
+    # [x]: Function tested - Show-SaveGames
     param(
         [Parameter(Mandatory = $true)]
         [string]$TitleSingular,
@@ -183,16 +195,18 @@ function Show-SaveGames {
     }
 }
 
+
+
 $localDirName = 'S1SS' # goes the snake
 $localLowPath = "$env:USERPROFILE\AppData\LocalLow"
 $s1ssPath = Join-Path -Path $localLowPath -ChildPath $localDirName
 $directoryFound = Test-Path -Path $s1ssPath
 
-# Prepare to handle saves
+# Prepare the target directory for S1SS operations
 if (-not($directoryFound)) {
     New-Item -Path $s1ssPath -ItemType Directory -Force -ErrorAction Stop -Verbose
 }
-# Look for existing vault
+# Look for the presence of an existing vault of saves
 $vaultPath = Join-Path -Path $s1ssPath -ChildPath 'Vault'
 $localVaultFound = Test-Path $vaultPath -PathType Container
 if (-not($localVaultFound)) {
@@ -200,23 +214,24 @@ if (-not($localVaultFound)) {
 }
 
 class SaveGame {
+    # An index for my own usage, this is not from Schedule 1
     $saveIndex
-    #Game.json
+    # Game.json
     $GameVersion
     $OrganisationName
-    #Metadata.json
+    # Metadata.json
     $LastPlayedDate
-    #Time.json
+    # Time.json
     $ElapsedDays
-    #Player_0/Inventory.json
+    # Player_0/Inventory.json
     $CashBalance
-    #Money.json
+    # Money.json
     $OnlineBalance
     # Path to SaveGame
     $pathSaveGame
 }
 
-# Eat moar RAM
+# Variables for working with savegames
 $saveIndexValue = 1
 $savePathSchedule1 = Set-LocationSchedule1Saves -Return $true
 $activeSaves = @()
@@ -236,7 +251,7 @@ for ($i = 1; $i -le 5; $i++) {
     }
 }
 
-# Unexpected Saves
+# Unexpected Saves in Schedule 1 folder - likely your manual backups
 $expectedSaveFolders = 1..5 | ForEach-Object { "SaveGame_$_" }
 Get-ChildItem -Path $savePathSchedule1 -Directory | Where-Object { $_.Name -notin $expectedSaveFolders } | ForEach-Object {
     $unexpectedSavePath = $_.FullName
@@ -260,11 +275,11 @@ if (Test-Path $vaultPath -PathType Container) {
 }
 $totalSaves = $activeSaves.Count + $unexpectedSaves.Count + $vaultedSaves.Count
 
-## Save Support : Main
+## Save Support : Main - This is the main execution logic of the script. Everything before this is foundation.
 
 $mnemonicLoop = $true
 while ($true -eq $mnemonicLoop) {
-    Clear-Host
+    Clear-Host # These labels are here to make sure you don't get lost.
     Write-Host ' ____  _ ____ ____'
     Write-Host '/ ___|/ / ___/ ___|'
     Write-Host '\___ \| \___ \___ \'
@@ -283,15 +298,15 @@ while ($true -eq $mnemonicLoop) {
     Write-Host 'B) Backup - Game > Vault'
     Write-Host 'C) Cleanup manual backups - permanent!'
     Write-Host 'D) Delete a save - also permanent!'
-    Write-Host 'I) Inspect a save, closely'
+    # [ ]: Function not written: Write-Host 'I) Inspect a save, closely'
     Write-Host 'L) List all saves'
-    Write-Host 'M) Mix up a save, cheater'
+    # [ ]: Function not written: Write-Host 'M) Mix up a save, cheater'
     Write-Host 'R) Restore - Vault > Game'
     Write-Host 'Q) Quit'
     $userInput = Read-Host "Select a number or Q to exit"
     switch ($userInput.ToUpper()) {
         'B' {
-            Clear-Host
+            Clear-Host # This is all the code for selecting B for Backup
             Write-Host '______            _'
             Write-Host '| ___ \          | |'
             Write-Host '| |_/ / __ _  ___| | ___   _ _ __'
@@ -302,20 +317,18 @@ while ($true -eq $mnemonicLoop) {
             Write-Host '                            |_|'
             $activeSavesCount = $activeSaves.Count
             do {
-                Clear-Host
                 Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
                 $userInput = Read-Host "Please enter a value between 1 and $activeSavesCount"
                 $isValidInput = ($null -ne $userInput -as [int] -and $userInput -ge 1 -and $userInput -le $activeSavesCount) -or ($userInput.ToUpper -eq 'C')
                 if (-not $isValidInput) {
-                    Write-Error "Invalid input. Please enter a number between '1' and `'$activeSavesCount`' or 'C' to Cancel."
+                    Write-Error "Invalid input. Please enter a valid saveIndex or 'C' to Cancel."
                 }
             } until ($isValidInput)
-            # Arrays start from 0, people start from 1
             $selectedIndex = [int]$userInput - 1
-            Write-Host "You've selected save #$userInput"
+            Write-Host "You've selected save #$userInput."
             do {
                 $userInput = Read-Host "Are you sure? y/n"
-                $isValidInput = ($userInput.ToUpper -eq 'N') -or ($userInput.ToUpper -eq 'Y')
+                $isValidInput = ($userInput.ToUpper() -eq 'N') -or ($userInput.ToUpper() -eq 'Y')
                 if (-not $isValidInput) {
                     Write-Error "Invalid input. Please enter a 'n' or 'y'."
                 }
@@ -329,6 +342,7 @@ while ($true -eq $mnemonicLoop) {
             Pause
         }
         'C' {
+            # This is all the code for selecting C for Cleanup
             Clear-Host
             Write-Host ' _____ _'
             Write-Host '/  __ \ |'
@@ -373,7 +387,7 @@ while ($true -eq $mnemonicLoop) {
             }
         }
         'D' {
-            Clear-Host
+            Clear-Host # This is all the code for selecting D for Delete
             Write-Host '______     _      _'
             Write-Host '|  _  \   | |    | |'
             Write-Host '| | | |___| | ___| |_ ___'
@@ -395,6 +409,7 @@ while ($true -eq $mnemonicLoop) {
                 $optionNumber++
             }
             else {
+                Write-Host "Please read this in the voice of Cronk:"
                 Write-Host "Hey! Buddy! You gotta play the game first!" -ForegroundColor Red
             }
 
@@ -410,25 +425,24 @@ while ($true -eq $mnemonicLoop) {
                 $optionNumber++
             }
 
-            # Get category from user
             do {
                 $selection = Read-Host "Enter the number corresponding to your choice:"
             } until ($choices.ContainsKey([int]$selection))
 
             # List saves and prompt for index to target
             $selectedSaveType = $choices[[int]$selection]
-            if ($selectedSaveType -eq "Active") {###
+            # List "Active" saves
+            if ($selectedSaveType -eq "Active") {
                 Clear-Host
                 Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
                 # Get saveindex from user
                 do {
-                    # Display the valid indexes to the user
+                    # Display the valid indexes to you, the user
                     Write-Host "Available Save Indexes:" -NoNewline
                     if ($activeSaves.Count -gt 0) {
                         $validIndices = $activeSaves | ForEach-Object { $_.saveIndex } | Sort-Object
                         Write-Host ($validIndices -join ", ")
                     }
-                    # Get a selection
                     $selection = Read-Host "Enter the saveIndex number corresponding to your choice:"
                     $selectedSave = $activeSaves | Where-Object { $_.saveIndex -eq [int]$selection }
                     $isValid = $selectedSave.Count -gt 0
@@ -438,11 +452,12 @@ while ($true -eq $mnemonicLoop) {
                 } until ($isValid)
                 Remove-Item -Path $activeSaves[$selection] -Recurse -Force -ErrorAction Continue -Verbose
             }
-            elseif ($selectedSaveType -eq "Unexpected") {###
+            # List "Unexpected" saves
+            elseif ($selectedSaveType -eq "Unexpected") {
                 Clear-Host
                 Show-SaveGames -TitleSingular 'Unexpected Save' -TitlePlural 'Unexpected Saves' -SaveData $unexpectedSaves
                 do {
-                    # Display the valid indexes to the user
+                    # Display the valid indexes to you, the user
                     Write-Host "Available Save Indexes:" -NoNewline
                     if ($unexpectedSaves.Count -gt 0) {
                         $validIndices = $unexpectedSaves | ForEach-Object { $_.saveIndex } | Sort-Object
@@ -457,7 +472,8 @@ while ($true -eq $mnemonicLoop) {
                 } until ($isValid)
                 Remove-Item -Path 
             }
-            elseif ($selectedSaveType -eq "Vaulted") {###
+            # List "Vaulted" saves
+            elseif ($selectedSaveType -eq "Vaulted") {
                 do {
                     Clear-Host
                     Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
@@ -469,11 +485,12 @@ while ($true -eq $mnemonicLoop) {
             Pause
         }
         'I' {
-
-            Pause
+            # This is all the code for selecting I for Inspect
+            # TODO: Generate "Inspect" logo
+            # ROADMAP: Write the Inspection feature
         }
         'L' {
-            Clear-Host
+            Clear-Host # This is all the code for selecting L for List
             Write-Host '  ___  _ _   _____'
             Write-Host ' / _ \| | | /  ___|'
             Write-Host '/ /_\ \ | | \ `--.  __ ___   _____  ___'
@@ -486,17 +503,17 @@ while ($true -eq $mnemonicLoop) {
             Pause
         }
         'M' {
-            Clear-Host
+            Clear-Host # This is all the code for selecting M for Mix
             Write-Host '___  ____'
             Write-Host '|  \/  (_)'
             Write-Host '| .  . |___  __'
             Write-Host '| |\/| | \ \/ /'
             Write-Host '| |  | | |>  <'
             Write-Host '\_|  |_/_/_/\_\'
-            Pause
+            # ROADMAP: Write the Mixing feature
         }
         'R' {
-            Clear-Host
+            Clear-Host # This is all the code for selecting R for Restore
             Write-Host "______          _"
             Write-Host "| ___ \        | |"
             Write-Host "| |_/ /___  ___| |_ ___  _ __ ___"
@@ -508,6 +525,6 @@ while ($true -eq $mnemonicLoop) {
         'Q' { Clear-Host ; $mnemonicLoop = $false }
         Default { $mnemonicLoop = $false }
     }
-    # End of Mnemonic Loop   
+    # End of Mnemonic Loop
 }
 Get-TimeWasted -timeStarted $timeStarted
