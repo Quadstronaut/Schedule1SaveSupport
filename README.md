@@ -4,8 +4,8 @@
 
 ### 🚀 Features
 
-* **Save Vault:** Backup and restore your game saves. 🛡️
-* **Save Exploration:** Explore save file data. 🔍
+* **Save Listing:** Show all save file data. 🔍
+* **Save Vault:** Backup and restore unlimited game saves. 🛡️
 * **Tested:** PowerShell-based, works on Windows 10+.\* 💻
 
 \* Tested on Windows 10 OS Build 19045.5796 with PowerShell 5.1.19041.5794 BuildVersion 10.0.19041.5794
