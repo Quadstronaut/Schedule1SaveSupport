@@ -4,29 +4,25 @@
 
 ### 🚀 Features
 
-* **Save Vault:** Backup and restore your game saves. 🛡️
-* **Save Editing:** Modify JSON values within save files. 🔧
-* **Save Exploration:** Explore save file data. 🔍
-* **Cross-Platform:** PowerShell-based, works on Windows 10+.\* 💻
-* **Auto-Updating:** Downloads latest scripts from GitHub. 🌐
+* **Save Listing:** Show all save file data. 🔍
+* **Save Vault:** Backup and restore unlimited game saves. 🛡️
+* **Tested:** PowerShell-based, works on Windows 10+.\* 💻
 
 \* Tested on Windows 10 OS Build 19045.5796 with PowerShell 5.1.19041.5794 BuildVersion 10.0.19041.5794
 
-### ⬇️ Installation
+### ⬇️ Instructions
 
-# Method 1 - Local PowerShell file
+# Getting Started
 1.  Download the launcher script.
-2.  Run it.
-3.  Scripts and saves are saved to `AppData\LocalLow\S1SS`.
+2.  Run it. Don't know how to run a PowerShell script? That's okay, 1 simple search and you'll be running. Still confused? Ask your fellow players!
 
 ### ⚡ Usage
 
-The launcher downloads and executes scripts.  Features are accessed through these scripts.
+Run saveSupport.ps1 - the script will ask you what actions to take and automation will handle the rest.
 
 ### ⚙️ Configuration
 
-* Scripts are stored in `AppData\LocalLow\S1SS`.
-* Edit scripts for custom functionality.
+* Saves are stored in `AppData\LocalLow\S1SS`.
 
 ### ➕ Contributing
 
@@ -37,7 +33,7 @@ The launcher downloads and executes scripts.  Features are accessed through thes
 ### 🐛 Issues
 
 Report bugs or suggest features.
-This will be up on GitHub following the initial release.
+This will be up on GitHub shortly following the initial release.
 
 ### 📜 License
 
@@ -45,5 +41,10 @@ This will be up on GitHub following the initial release.
 
 ### ❓ Questions
 
-[@Quadstronaut on TVGS Shedule 1 Official Server](LINK_TO_TYLER'S_SERVER_GOES_HERE)
-[Project Discord coming soon](#-schedule-1-save-support-s1ss)
+Schedule 1 server: [@Quadstronaut (iamnotkage) on TVGS Shedule 1 Official Server](https://discord.gg/PGe2nnaCn5)
+
+Personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/sjVmCufX3f)
+
+### ⚠ Warning - Safety First
+
+Don't run scripts from the internet without checking what they do first!
