@@ -10,9 +10,9 @@
 
 \* Tested on Windows 10 OS Build 19045.5796 with PowerShell 5.1.19041.5794 BuildVersion 10.0.19041.5794
 
-### ⬇️ Installation
+### ⬇️ Instructions
 
-# Method 1 - Local PowerShell file
+# Getting Started
 1.  Download the launcher script.
 2.  Run it. Don't know how to run a PowerShell script? That's okay, 1 simple search and you'll be running. Still confused? Ask your fellow players!
 
@@ -43,3 +43,7 @@ This will be up on GitHub shortly following the initial release.
 
 [@Quadstronaut (iamnotkage) on TVGS Shedule 1 Official Server](https://discord.gg/PGe2nnaCn5)
 [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/sjVmCufX3f)
+
+### ⚠ Warning - Safety First
+
+Don't run scripts from the internet without checking what they do first!
