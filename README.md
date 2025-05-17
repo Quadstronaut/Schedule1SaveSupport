@@ -5,7 +5,6 @@
 ### 🚀 Features
 
 * **Save Vault:** Backup and restore your game saves. 🛡️
-* **Save Editing:** Modify JSON values within save files. 🔧
 * **Save Exploration:** Explore save file data. 🔍
 * **Tested:** PowerShell-based, works on Windows 10+.\* 💻
 
@@ -15,9 +14,8 @@
 
 # Method 1 - Local PowerShell file
 1.  Download the launcher script.
-2.  Run it.
-3.  Scripts and saves are saved to `AppData\LocalLow\S1SS`.
-4.  A shortcut can optionally be placed on Desktop or Documents
+2.  Run it. Don't know how to run a PowerShell script?
+Here's a YT video link: https://youtu.be/3IKQ0PwIAdo?t=85
 
 ### ⚡ Usage
 
