@@ -120,7 +120,7 @@ function Get-SaveGame {
         $moneyFile = Join-Path $SaveFolder "Money.json"
         if (Test-Path $moneyFile) {
             $moneyData = Get-Content -Path $moneyFile -Raw | ConvertFrom-Json
-            $save.OnlineBalance = "{0:N0}" -f ([int]$moneyData.OnlineBalance)
+            $save.BankBalance = "{0:N0}" -f ([int]$moneyData.OnlineBalance)
         }
         $save.saveIndex = $saveIndex # Use the parameter
     }
@@ -192,7 +192,7 @@ function Show-SaveGames {
         else {
             Write-Host "--- $TitlePlural ---"
         }
-        $SaveData | Format-Table saveIndex, GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, OnlineBalance, pathSaveGame -AutoSize
+        $SaveData | Format-Table saveIndex, GameVersion, OrganisationName, LastPlayedDate, ElapsedDays, CashBalance, BankBalance, pathSaveGame -AutoSize
     }
 }
 
@@ -221,7 +221,7 @@ class SaveGame {
     $LastPlayedDate
     $ElapsedDays
     $CashBalance
-    $OnlineBalance
+    $BankBalance
     $pathSaveGame
 }
 
@@ -291,8 +291,8 @@ while ($true -eq $mnemonicLoop) {
     }
     Write-Host "`nMake a selection:"
     if ($activeSavesPresent) { Write-Host 'B) Backup - Game > Vault' }
-    if ($unexpectedSavesPresent) { Write-Host 'C) Cleanup manual backups - permanent!' }
-    Write-Host 'D) Delete a save - permanent!'
+    if ($unexpectedSavesPresent) { Write-Host 'C) Cleanup manual backups - permanent!' -ForegroundColor Red }
+    if ($totalSaves -gt 0) { Write-Host 'D) Delete a save - permanent!' -ForegroundColor Red }
     if ($vaultedSavesPresent) { Write-Host 'R) Restore - Vault > Game' }
     Write-Host "S) Show Saves (Total saves: $totalSaves)"
     Write-Host 'Q) Quit'
@@ -333,9 +333,6 @@ while ($true -eq $mnemonicLoop) {
                     Write-Error $_.Exception.InnerException.Message
                 }
             }
-            finally {
-                Pause
-            }
         }
         'C' {
             # This is all the code for selecting C for Cleanup
@@ -357,7 +354,6 @@ while ($true -eq $mnemonicLoop) {
                 foreach ($item in $unexpectedSaves) {
                     Remove-Item -Path $item.pathSaveGame -Recurse -Force -ErrorAction Continue -Verbose
                 }
-                Pause
             }
         }
         'D' {
@@ -417,7 +413,7 @@ while ($true -eq $mnemonicLoop) {
                     $selection = Read-Host "Enter the saveIndex number corresponding to your choice:"
                 } until ($validIndices.ContainsKey([int]$selection))
                 $selectedSave = $activeSaves | Where-Object { $_.saveIndex -eq [int]$selection }
-                Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction Continue -Verbose
+                Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction SilentlyContinue -Verbose
             }
             # List "Unexpected" saves
             elseif ($selectedSaveType -eq "Unexpected") {
@@ -430,7 +426,7 @@ while ($true -eq $mnemonicLoop) {
                     $selection = Read-Host "Enter the saveIndex number corresponding to your choice:"
                 } until ($validIndices.ContainsKey([int]$selection))
                 $selectedSave = $unexpectedSaves | Where-Object { $_.saveIndex -eq [int]$selection }
-                Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction Continue -Verbose
+                Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction SilentlyContinue -Verbose
             }
             # List "Vaulted" saves
             elseif ($selectedSaveType -eq "Vaulted") {
@@ -441,9 +437,8 @@ while ($true -eq $mnemonicLoop) {
                     $selection = Read-Host "Enter the saveIndex number corresponding to your choice:"
                 } until ($validIndices.ContainsKey([int]$selection))
                 $selectedSave = $vaultedSaves | Where-Object { $_.saveIndex -eq [int]$selection }
-                Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction Continue -Verbose
+                Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction SilentlyContinue -Verbose
             }
-            Pause
         }
         'I' {
             # This is all the code for selecting I for Inspect
