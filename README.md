@@ -48,3 +48,5 @@ Personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord
 ### ⚠ Warning - Safety First
 
 Don't run scripts from the internet without checking what they do first!
+
+Also fuck you Benji. You're below human garbage, I just don't have a word for it.
