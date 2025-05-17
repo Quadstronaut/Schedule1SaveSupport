@@ -36,7 +36,7 @@ if (-not $IsAdmin) {
     Write-Host ""
     Write-Host "Sorry about the inconvenience, testing deemed it necessary."
     Write-Host "The script would run fine but the files wouldn't actually move."
-    Pause ; exit
+    #Pause ; exit
 }
 
 # Telemetry
@@ -323,7 +323,7 @@ while ($true -eq $mnemonicLoop) {
             New-Item -ItemType Directory -Path $newVaultPath -Force -ErrorAction Stop -Verbose
             $sourcePath = Join-Path -Path $activeSaves[$selectedIndex].pathSaveGame -ChildPath "*"
             try {
-                Copy-Item -Path $sourcePath -Destination $newVaultPath -Recurse -Force -ErrorAction Continue -Verbose -WhatIf
+                Copy-Item -Path $sourcePath -Destination $newVaultPath -Recurse -Force -ErrorAction Continue -Verbose
                 Write-Host "Backup completed successfully!" -ForegroundColor Green
             }
             catch {
