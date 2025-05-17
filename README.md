@@ -42,6 +42,7 @@ This will be up on GitHub shortly following the initial release.
 ### ❓ Questions
 
 Schedule 1 server: [@Quadstronaut (iamnotkage) on TVGS Shedule 1 Official Server](https://discord.gg/PGe2nnaCn5)
+
 Personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/sjVmCufX3f)
 
 ### ⚠ Warning - Safety First
