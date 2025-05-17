@@ -292,9 +292,9 @@ while ($true -eq $mnemonicLoop) {
     Write-Host "`nMake a selection:"
     if ($activeSavesPresent) { Write-Host 'B) Backup - Game > Vault' }
     if ($unexpectedSavesPresent) { Write-Host 'C) Cleanup manual backups - permanent!' }
-    Write-Host 'D) Delete a save - also permanent!'
-    Write-Host "L) List all saves (Total saves: $totalSaves)"
+    Write-Host 'D) Delete a save - permanent!'
     if ($vaultedSavesPresent) { Write-Host 'R) Restore - Vault > Game' }
+    Write-Host "S) Show Saves (Total saves: $totalSaves)"
     Write-Host 'Q) Quit'
     $userInput = Read-Host "Select a number or Q to exit"
     switch ($userInput.ToUpper()) {
@@ -503,7 +503,6 @@ while ($true -eq $mnemonicLoop) {
             Pause
         }
         'Q' { Clear-Host ; $mnemonicLoop = $false }
-        Default { $mnemonicLoop = $false }
     }
     # End of Mnemonic Loop
 }

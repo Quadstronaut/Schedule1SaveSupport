@@ -14,8 +14,7 @@
 
 # Method 1 - Local PowerShell file
 1.  Download the launcher script.
-2.  Run it. Don't know how to run a PowerShell script?
-Here's a YT video link: https://youtu.be/3IKQ0PwIAdo?t=85
+2.  Run it. Don't know how to run a PowerShell script? That's okay, 1 simple search and you'll be running. Still confused? Ask your fellow players!
 
 ### ⚡ Usage
 
@@ -23,7 +22,7 @@ Run saveSupport.ps1 - the script will ask you what actions to take and automatio
 
 ### ⚙️ Configuration
 
-* Scripts are stored in `AppData\LocalLow\S1SS`.
+* Saves are stored in `AppData\LocalLow\S1SS`.
 
 ### ➕ Contributing
 
@@ -34,7 +33,7 @@ Run saveSupport.ps1 - the script will ask you what actions to take and automatio
 ### 🐛 Issues
 
 Report bugs or suggest features.
-This will be up on GitHub following the initial release.
+This will be up on GitHub shortly following the initial release.
 
 ### 📜 License
 
@@ -43,3 +42,4 @@ This will be up on GitHub following the initial release.
 ### ❓ Questions
 
 [@Quadstronaut (iamnotkage) on TVGS Shedule 1 Official Server](https://discord.gg/PGe2nnaCn5)
+[@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/sjVmCufX3f)
