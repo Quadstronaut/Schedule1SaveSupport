@@ -12,7 +12,7 @@
   Author: Kage@GitHub Quadstronaut@Schedule1
   Version: 1.0
   GitHub Repository: https://github.com/GitKageHub/Schedule1SaveSupport
-
+#>
 
 ## Functions - These are the bits of code I reuse many times through the script.
 
@@ -37,7 +37,7 @@ if (-not $IsAdmin) {
     Write-Host "Sorry about the inconvenience, testing deemed it necessary."
     Write-Host "The script would run fine but the files wouldn't actually move."
     Pause ; exit
-}#>
+}
 
 # Telemetry
 $timeStarted = Get-Date
