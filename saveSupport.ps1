@@ -9,8 +9,7 @@
   engineer does. Please make use of my GitHub repository GitKageHub/Schedule1SaveSupport to find documentation, report
   issues, etc.
 .NOTES
-  Author: Kage@GitHub Quadstronaut@Schedule1
-  Version: 1.0
+  Author: Kage@GitHub
   GitHub Repository: https://github.com/GitKageHub/Schedule1SaveSupport
 #>
 
