@@ -132,6 +132,24 @@ function Get-SaveGame {
     return $save
 }
 
+function Get-SaveIndexFromUser {
+    # [ ]: Function tested - Get-SaveIndexFromUser
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        $saveList
+    )
+    # Get saveindex from user
+    Write-Host "Available Save Indexes:" -NoNewline
+    $validIndices = $saveList | ForEach-Object { $_.saveIndex } | Sort-Object
+    Write-Host ($validIndices -join ", ")
+    do {
+        [int]$selection = Read-Host "Enter a valid saveIndex number"
+    } until ($selection -in $validIndices)
+    $selectedSave = $saveList | Where-Object { $_.saveIndex -eq [int]$selection }
+    return $selectedSave
+}
+
 function Set-LocationSchedule1Saves {
     # [x]: Function tested - Set-LocationSchedule1Saves
     [CmdletBinding()]
@@ -167,12 +185,39 @@ function Set-LocationSchedule1Saves {
     }
 
     # Handle location based on return flag.
-    if ($Return) {
-        return $saveLocation
+    if ($Return) { return $saveLocation } else { Set-Location -Path $saveLocation }
+}
+
+function Set-RestorePath {
+    # []: Function tested - Set-RestorePath
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [int]$numberSlot
+    )
+    # Construct the base path to the Schedule 1 saves.
+    $schedule1SavesPath = Join-Path -Path $localLowPath -ChildPath "TVGS\Schedule I\Saves"
+
+    # Check if the base saves directory exists.
+    if (-not (Test-Path -Path $schedule1SavesPath -PathType 'Container')) {
+        Write-Warning "The Schedule 1 saves directory does not exist at '$schedule1SavesPath'."
+        return
     }
-    else {
-        Set-Location -Path $saveLocation
+
+    # Get the subdirectories within the Saves directory (should be the Steam ID).
+    $steamIdDirectories = Get-ChildItem -Path $schedule1SavesPath -Directory
+
+    # Assume the first directory is the correct Steam ID.  This is usually the case.
+    # Multi-boxers and multi-account players may have a problem here.
+    $steamIdDirectory = $steamIdDirectories[0]
+    $saveLocation = Join-Path -Path $schedule1SavesPath -ChildPath $steamIdDirectory.Name
+    $saveFolder = "SaveGame_" + $numberSlot.toString()
+    $saveLocation = Join-Path -Path $saveLocation -ChildPath $saveFolder
+    # Check if the final save location exists.
+    if (-not (Test-Path -Path $saveLocation -PathType 'Container')) {
+        New-Item -Path $saveLocation -ItemType Directory
     }
+    return $saveLocation
 }
 
 function Show-SaveGames {
@@ -308,23 +353,16 @@ while ($true -eq $mnemonicLoop) {
             Write-Host '\____/ \__,_|\___|_|\_\\__,_| .__/'
             Write-Host '                            | |'
             Write-Host '                            |_|'
-            $activeSavesCount = $activeSaves.Count
-            do {
-                Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
-                $userInput = Read-Host "Please enter a value between 1 and $activeSavesCount"
-                $isValidInput = ($null -ne $userInput -as [int] -and $userInput -ge 1 -and $userInput -le $activeSavesCount) -or ($userInput.ToUpper -eq 'C')
-                if (-not $isValidInput) {
-                    Write-Error "Invalid input. Please enter a valid saveIndex or 'C' to Cancel."
-                }
-            } until ($isValidInput)
-            $selectedIndex = [int]$userInput - 1
-            $newFolderName = New-Guid
-            $newVaultPath = Join-Path -Path $vaultPath -ChildPath $newFolderName
+            Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
+            $selectedSave = Get-SaveIndexFromUser -saveList $activeSaves
+            $randomFolderName = New-Guid
+            $newVaultPath = Join-Path -Path $vaultPath -ChildPath $randomFolderName
             New-Item -ItemType Directory -Path $newVaultPath -Force -ErrorAction Stop -Verbose
-            $sourcePath = Join-Path -Path $activeSaves[$selectedIndex].pathSaveGame -ChildPath "*"
+            $sourcePath = Join-Path -Path $selectedSave.pathSaveGame -ChildPath "*"
             try {
                 Copy-Item -Path $sourcePath -Destination $newVaultPath -Recurse -Force -ErrorAction Continue -Verbose
                 Write-Host "Backup completed successfully!" -ForegroundColor Green
+                Start-Sleep -Seconds 2
             }
             catch {
                 Write-Error $_.Exception.Message
@@ -364,79 +402,54 @@ while ($true -eq $mnemonicLoop) {
             Write-Host '| | | / _ \ |/ _ \ __/ _ \'
             Write-Host '| |/ /  __/ |  __/ ||  __/'
             Write-Host '|___/ \___|_|\___|\__\___|'
-            $userInput = 'x'
             Write-Host "Select an option of saves to delete from."
             $choices = @{}
             $optionNumber = 1
 
             # Active
             if ($activeSavesPresent) {
-                Write-Host "$optionNumber. Active ($activeSavesCount)"
+                Write-Host "$optionNumber. Active ($($activeSaves.Count))"
                 $choices[$optionNumber] = "Active"
                 $optionNumber++
-            }
-            else {
-                Write-Host "Please read this in the voice of Cronk:"
-                Write-Host "Hey! Buddy! You gotta play the game first!" -ForegroundColor Red
             }
 
             # Unexpected
             if ($unexpectedSavesPresent) {
-                Write-Host "$optionNumber. Unexpected Saves ($unexpectedSavesCount)"
+                Write-Host "$optionNumber. Unexpected Saves ($($unexpectedSaves.Count))"
                 $choices[$optionNumber] = "Unexpected"
                 $optionNumber++
             }
 
             # Vaulted
             if ($vaultedSavesPresent) {
-                Write-Host "$optionNumber. Vaulted ($vaultedSavesCount)"
+                Write-Host "$optionNumber. Vaulted ($($vaultedSaves.Count))"
                 $choices[$optionNumber] = "Vaulted"
                 $optionNumber++
             }
 
             # Answer me damnit!
             do {
-                $selection = Read-Host "Enter the number corresponding to your choice:"
+                $selection = Read-Host "Enter the number of the group"
             } until ($choices.ContainsKey([int]$selection))
 
             # List saves and prompt for index to target
             $selectedSaveType = $choices[[int]$selection]
             # List "Active" saves
             if ($selectedSaveType -eq "Active") {
-                Clear-Host
                 Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
-                # Get saveindex from user
-                Write-Host "Available Save Indexes:" -NoNewline
-                $validIndices = $activeSaves | ForEach-Object { $_.saveIndex } | Sort-Object
-                Write-Host ($validIndices -join ", ")
-                do {
-                    $selection = Read-Host "Enter the saveIndex number corresponding to your choice:"
-                } until ($validIndices.ContainsKey([int]$selection))
-                $selectedSave = $activeSaves | Where-Object { $_.saveIndex -eq [int]$selection }
+                $selectedSave = Get-SaveIndexFromUser -saveList $activeSaves
                 Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction SilentlyContinue -Verbose
             }
             # List "Unexpected" saves
             elseif ($selectedSaveType -eq "Unexpected") {
-                Clear-Host
                 Show-SaveGames -TitleSingular 'Unexpected Save' -TitlePlural 'Unexpected Saves' -SaveData $unexpectedSaves
-                $validIndices = $unexpectedSaves | ForEach-Object { $_.saveIndex } | Sort-Object
-                Write-Host "Available Save Indexes:" -NoNewline
-                Write-Host ($validIndices -join ", ")
-                do {
-                    $selection = Read-Host "Enter the saveIndex number corresponding to your choice:"
-                } until ($validIndices.ContainsKey([int]$selection))
-                $selectedSave = $unexpectedSaves | Where-Object { $_.saveIndex -eq [int]$selection }
+                $selectedSave = Get-SaveIndexFromUser -saveList $unexpectedSaves
                 Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction SilentlyContinue -Verbose
             }
             # List "Vaulted" saves
             elseif ($selectedSaveType -eq "Vaulted") {
-                do {
-                    Clear-Host
-                    Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
-                    $validIndices = $vaultedSaves | ForEach-Object { $_.saveIndex } | Sort-Object
-                    $selection = Read-Host "Enter the saveIndex number corresponding to your choice:"
-                } until ($validIndices.ContainsKey([int]$selection))
-                $selectedSave = $vaultedSaves | Where-Object { $_.saveIndex -eq [int]$selection }
+                Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
+                $selectedSave = Get-SaveIndexFromUser -saveList $vaultedSaves
                 Remove-Item -Path $selectedSave.pathSaveGame -Recurse -Force -ErrorAction SilentlyContinue -Verbose
             }
         }
@@ -454,22 +467,18 @@ while ($true -eq $mnemonicLoop) {
             Write-Host "| |\ \  __/\__ \ || (_) | | |  __/"
             Write-Host "\_| \_\___||___/\__\___/|_|  \___|"
             $vaultedSavesCount = $vaultedSaves.Count
+            Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
+            $selectedSaveSource = Get-SaveIndexFromUser -saveList $vaultedSaves
+            Show-SaveGames -TitleSingular 'Active Save' -TitlePlural 'Active Saves' -SaveData $activeSaves
             do {
-                Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
-                $userInput = Read-Host "Please enter a value between 1 and $vaultedSavesCount"
-                $isValidInput = ($null -ne $userInput -as [int] -and $userInput -ge 1 -and $userInput -le $vaultedSavesCount) -or ($userInput.ToUpper -eq 'C')
-                if (-not $isValidInput) {
-                    Write-Error "Invalid input. Please enter a valid saveIndex or 'C' to Cancel."
-                }
-            } until ($isValidInput)
-            $selectedIndex = [int]$userInput - 1
-            $newFolderName = New-Guid
-            $newVaultPath = Join-Path -Path $vaultPath -ChildPath $newFolderName
-            New-Item -ItemType Directory -Path $newVaultPath -Force -ErrorAction Stop -Verbose
-            $sourcePath = Join-Path -Path $vaultedSaves[$selectedIndex].pathSaveGame -ChildPath "*"
+                $userRestoreChoice = Read-Host "Which GameSave do want to restore to? (1-5)"
+            }until($userRestoreChoice -in "1", "2", "3", "4", "5")
+            $restorePath = Set-RestorePath $userRestoreChoice
+            $sourcePath = Join-Path -Path $selectedSaveSource.pathSaveGame -ChildPath "*"
             try {
-                Copy-Item -Path $sourcePath -Destination $newVaultPath -Recurse -Force -ErrorAction Continue -Verbose
-                Write-Host "Backup completed successfully!" -ForegroundColor Green
+                Copy-Item -Path $sourcePath -Destination $restorePath.FullName -Recurse -Force -ErrorAction Continue -Verbose
+                Write-Host "Restore completed successfully!" -ForegroundColor Green
+                Start-Sleep -Seconds 2
             }
             catch {
                 Write-Error $_.Exception.Message
@@ -478,11 +487,6 @@ while ($true -eq $mnemonicLoop) {
                     Write-Error $_.Exception.InnerException.Message
                 }
             }
-            finally {
-                Pause
-            }
-            Show-SaveGames -TitleSingular 'Vaulted Save' -TitlePlural 'Vaulted Saves' -SaveData $vaultedSaves
-            Pause
         }
         'S' {
             Clear-Host # This is all the code for selecting S for Saves
