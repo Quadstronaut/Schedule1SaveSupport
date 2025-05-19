@@ -48,5 +48,3 @@ Personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord
 ### ⚠ Warning - Safety First
 
 Don't run scripts from the internet without checking what they do first!
-
-100% fuck Benji.
