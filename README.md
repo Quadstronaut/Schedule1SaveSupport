@@ -41,8 +41,7 @@ This will be up on GitHub shortly following the initial release.
 
 ### ❓ Questions
 
-Schedule 1 server: Do not look for me in this super-mismanaged community. Instead, find me here:
-Personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/sjVmCufX3f)
+Schedule 1 server: Do not look for me in this super-mismanaged community. Instead, find me in my personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/sjVmCufX3f) where you're absolutely allowed to ask questions and collaborate.
 
 ### ⚠ Warning - Safety First
 
