@@ -10,7 +10,7 @@
   issues, etc.
 .NOTES
   Author: Kage@GitHub
-  GitHub Repository: https://github.com/GitKageHub/Schedule1SaveSupport
+  GitHub Repository: https://github.com/Quadstronaut/Schedule1SaveSupport
 #>
 
 ## Functions - These are the bits of code I reuse many times through the script.
