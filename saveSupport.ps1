@@ -6,11 +6,11 @@
   import export feature, but that still requires me to manage my own files. Gross. I introduce to you the concept of
   a save vault. I'm reserving a folder right next to the game's where the saves are stored. I will move saves in and
   out of that folder for you, keeping track of all the details. No work, just managing your saves like an automation
-  engineer does. Please make use of my GitHub repository GitKageHub/Schedule1SaveSupport to find documentation, report
+  engineer does. Please make use of my GitHub repository Quadstronaut/Schedule1SaveSupport to find documentation, report
   issues, etc.
 .NOTES
   Author: Kage@GitHub
-  GitHub Repository: https://github.com/GitKageHub/Schedule1SaveSupport
+  GitHub Repository: https://github.com/Quadstronaut/Schedule1SaveSupport
 #>
 
 ## Functions - These are the bits of code I reuse many times through the script.
