@@ -172,7 +172,7 @@ Released under [CC0-1.0](LICENSE) — public domain dedication.
 
 ## 💬 Questions
 
-Find me in my personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/sjVmCufX3f)
+Find me in my personal server: [@CMDR Duvrazh (iamnotkage) on Mission Control](https://discord.gg/Ug8CM86Bxv)
 
 ---
 
